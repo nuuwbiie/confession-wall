@@ -51,11 +51,35 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Collect unique user IDs to fetch profiles
+  const userIds = [...new Set((data || []).map((item: any) => item.user_id).filter(Boolean))];
+
+  // Fetch profiles for all relevant users
+  const profileMap: Record<string, string> = {};
+  if (userIds.length > 0) {
+    const adminClient = getAdminClient();
+    const { data: profiles } = await adminClient
+      .from("profiles")
+      .select("id, username")
+      .in("id", userIds);
+
+    if (profiles) {
+      for (const profile of profiles) {
+        profileMap[profile.id] = profile.username;
+      }
+    }
+  }
+
   // Flatten the likes(count) and comments(count) subqueries into plain numbers
+  // and set author_username based on is_anonymous flag
   const mappedData = (data || []).map((item: any) => ({
     ...item,
     likes: item.likes?.[0]?.count ?? 0,
     comments: item.comments?.[0]?.count ?? 0,
+    author_username:
+      item.is_anonymous === false && item.user_id && profileMap[item.user_id]
+        ? profileMap[item.user_id]
+        : null,
   }));
 
   return NextResponse.json({
