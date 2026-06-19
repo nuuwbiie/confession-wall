@@ -28,6 +28,7 @@ export default function Header() {
   const [avatarDropdownOpen, setAvatarDropdownOpen] = useState(false);
   const [userConfessions, setUserConfessions] = useState<UserConfession[]>([]);
   const [userConfessionsLoading, setUserConfessionsLoading] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown on outside click
@@ -40,6 +41,23 @@ export default function Header() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -128,140 +146,176 @@ export default function Header() {
   }
 
   return (
-    <header className="bg-background/80 backdrop-blur-md sticky top-0 z-50 border-b border-outline-variant/10">
-      <nav className="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 max-w-container-max-width mx-auto">
-        <div className="flex items-center gap-8">
-          <Link
-            href="/"
-            className="text-display-lg font-bold text-primary tracking-tight text-2xl md:text-3xl"
-          >
-            Confession Wall
-          </Link>
-          <div className="hidden md:flex gap-6">
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`pb-1 transition-colors duration-300 ${
-                  pathname === item.href
-                    ? "text-primary border-b-2 border-primary font-bold"
-                    : "text-on-surface-variant hover:text-primary"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          {/* Auth Section */}
-          {user ? (
-            <div className="flex items-center gap-3 relative" ref={dropdownRef}>
-              <button className="p-2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer" aria-label="Notifications">
-                <span className="material-symbols-outlined">notifications</span>
-              </button>
-              <button
-                onClick={handleAvatarClick}
-                className="flex items-center gap-2 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center">
-                  <span className="text-primary font-bold text-sm">
-                    {username?.charAt(0).toUpperCase() || "U"}
-                  </span>
-                </div>
-              </button>
-              <button
-                onClick={handleSignOut}
-                className="p-2 text-on-surface-variant hover:text-error transition-colors cursor-pointer"
-                aria-label="Sign out"
-              >
-                <span className="material-symbols-outlined">logout</span>
-              </button>
-
-              {/* Avatar dropdown */}
-              {avatarDropdownOpen && (
-                <div className="absolute top-full right-0 mt-2 w-80 bg-surface-container-lowest rounded-2xl soft-shadow border border-outline-variant/10 overflow-hidden z-50">
-                  <div className="px-5 py-4 border-b border-outline-variant/10">
-                    <p className="font-label-sm text-label-sm text-on-surface font-medium">
-                      {username || "User"}
-                    </p>
-                    <p className="text-xs text-on-surface-variant/60">
-                      Confessionmu
-                    </p>
-                  </div>
-                  <div className="max-h-64 overflow-y-auto">
-                    {userConfessionsLoading ? (
-                      <div className="flex justify-center py-6">
-                        <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                      </div>
-                    ) : userConfessions.length === 0 ? (
-                      <div className="text-center py-6">
-                        <p className="text-xs text-on-surface-variant/60">
-                          Belum ada confession
-                        </p>
-                      </div>
-                    ) : (
-                      userConfessions.map((c) => (
-                        <div
-                          key={c.id}
-                          className="px-5 py-3 hover:bg-surface-container-low/50 transition-colors border-b border-outline-variant/5 last:border-0"
-                        >
-                          <p className="text-sm text-on-surface line-clamp-1">
-                            &ldquo;{c.content.slice(0, 60)}...&rdquo;
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <StatusDot status={c.status} />
-                            <span className="text-[10px] text-on-surface-variant/60">
-                              {getTimeAgo(c.created_at)}
-                            </span>
-                            <span className="text-[10px] text-on-surface-variant/40">
-                              {c.is_anonymous ? "Anonim" : "Publik"}
-                            </span>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                  <div className="px-5 py-3 border-t border-outline-variant/10 bg-surface-container-low/30">
-                    <Link
-                      href="/confess"
-                      className="text-xs text-primary font-medium hover:underline"
-                      onClick={() => setAvatarDropdownOpen(false)}
-                    >
-                      + Tulis confession baru
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
+    <>
+      <header className="bg-background/80 backdrop-blur-md sticky top-0 z-50 border-b border-outline-variant/10">
+        <nav className="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 max-w-container-max-width mx-auto">
+          <div className="flex items-center gap-8">
             <Link
-              href="/login"
-              className="bg-primary text-on-primary px-4 py-2 rounded-full font-label-sm text-label-sm font-bold hover:opacity-90 transition-all duration-200 shadow-sm"
+              href="/"
+              className="text-display-lg font-bold text-primary tracking-tight text-xl md:text-3xl"
             >
-              Masuk
+              Confession Wall
             </Link>
-          )}
+            <div className="hidden md:flex gap-6">
+              {NAV_ITEMS.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`pb-1 transition-colors duration-300 ${
+                    pathname === item.href
+                      ? "text-primary border-b-2 border-primary font-bold"
+                      : "text-on-surface-variant hover:text-primary"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Auth Section */}
+            {user ? (
+              <div className="flex items-center gap-2 relative" ref={dropdownRef}>
+                <button className="p-2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer min-touch-target flex items-center justify-center" aria-label="Notifications">
+                  <span className="material-symbols-outlined">notifications</span>
+                </button>
+                <button
+                  onClick={handleAvatarClick}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <div className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center">
+                    <span className="text-primary font-bold text-sm">
+                      {username?.charAt(0).toUpperCase() || "U"}
+                    </span>
+                  </div>
+                </button>
+                <button
+                  onClick={handleSignOut}
+                  className="p-2 text-on-surface-variant hover:text-error transition-colors cursor-pointer min-touch-target flex items-center justify-center"
+                  aria-label="Sign out"
+                >
+                  <span className="material-symbols-outlined">logout</span>
+                </button>
 
-          {/* Mobile menu */}
-          <div className="md:hidden flex gap-2">
-            {NAV_ITEMS.map((item) => (
+                {/* Avatar dropdown */}
+                {avatarDropdownOpen && (
+                  <div className="absolute top-full right-0 mt-2 w-80 max-w-[calc(100vw-32px)] bg-surface-container-lowest rounded-2xl soft-shadow border border-outline-variant/10 overflow-hidden z-50">
+                    <div className="px-5 py-4 border-b border-outline-variant/10">
+                      <p className="font-label-sm text-label-sm text-on-surface font-medium">
+                        {username || "User"}
+                      </p>
+                      <p className="text-xs text-on-surface-variant/60">
+                        Confessionmu
+                      </p>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {userConfessionsLoading ? (
+                        <div className="flex justify-center py-6">
+                          <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                        </div>
+                      ) : userConfessions.length === 0 ? (
+                        <div className="text-center py-6">
+                          <p className="text-xs text-on-surface-variant/60">
+                            Belum ada confession
+                          </p>
+                        </div>
+                      ) : (
+                        userConfessions.map((c) => (
+                          <div
+                            key={c.id}
+                            className="px-5 py-3 hover:bg-surface-container-low/50 transition-colors border-b border-outline-variant/5 last:border-0"
+                          >
+                            <p className="text-sm text-on-surface line-clamp-1">
+                              &ldquo;{c.content.slice(0, 60)}...&rdquo;
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <StatusDot status={c.status} />
+                              <span className="text-[10px] text-on-surface-variant/60">
+                                {getTimeAgo(c.created_at)}
+                              </span>
+                              <span className="text-[10px] text-on-surface-variant/40">
+                                {c.is_anonymous ? "Anonim" : "Publik"}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <div className="px-5 py-3 border-t border-outline-variant/10 bg-surface-container-low/30">
+                      <Link
+                        href="/confess"
+                        className="text-xs text-primary font-medium hover:underline"
+                        onClick={() => setAvatarDropdownOpen(false)}
+                      >
+                        + Tulis confession baru
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
               <Link
-                key={item.href}
-                href={item.href}
-                className={`text-xs px-2 py-1 rounded-full transition-colors ${
-                  pathname === item.href
-                    ? "bg-primary-container text-on-primary-container"
-                    : "text-on-surface-variant"
-                }`}
+                href="/login"
+                className="bg-primary text-on-primary px-4 py-2 rounded-full font-label-sm text-label-sm font-bold hover:opacity-90 transition-all duration-200 shadow-sm whitespace-nowrap"
               >
-                {item.label}
+                Masuk
               </Link>
-            ))}
+            )}
+
+            {/* Mobile hamburger button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className={`md:hidden p-2 rounded-full transition-colors min-touch-target flex items-center justify-center ${
+                mobileMenuOpen
+                  ? "bg-surface-container text-primary"
+                  : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container"
+              }`}
+              aria-label={mobileMenuOpen ? "Tutup menu" : "Buka menu"}
+            >
+              <span className="material-symbols-outlined">
+                {mobileMenuOpen ? "close" : "menu"}
+              </span>
+            </button>
+          </div>
+        </nav>
+      </header>
+
+      {/* Mobile navigation drawer - rendered outside header */}
+      {mobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-[60]">
+          {/* Backdrop with blur */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-md"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          {/* Menu panel from top */}
+          <div className="relative mx-4 mt-[72px] bg-surface-container-lowest rounded-2xl soft-shadow border border-outline-variant/10 overflow-hidden animate-fadeIn">
+            <nav className="py-2">
+              {NAV_ITEMS.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center gap-4 px-5 py-4 transition-colors ${
+                    pathname === item.href
+                      ? "bg-primary-container/20 text-primary font-bold"
+                      : "text-on-surface-variant hover:bg-surface-container-low"
+                  }`}
+                >
+                  <span className="material-symbols-outlined">
+                    {item.href === "/" ? "wall_art" : item.href === "/confess" ? "edit_note" : "dashboard"}
+                  </span>
+                  <span className="font-body-md text-body-md">{item.label}</span>
+                  {pathname === item.href && (
+                    <span className="ml-auto w-2 h-2 rounded-full bg-primary" />
+                  )}
+                </Link>
+              ))}
+            </nav>
           </div>
         </div>
-      </nav>
-    </header>
+      )}
+    </>
   );
 }
 

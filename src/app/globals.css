@@ -140,24 +140,54 @@ body {
 /* === MASONRY GRID === */
 .masonry-grid {
   column-count: 1;
-  column-gap: 24px;
+  column-gap: 16px;
 }
 
 @media (min-width: 768px) {
   .masonry-grid {
     column-count: 2;
+    column-gap: 20px;
   }
 }
 
 @media (min-width: 1024px) {
   .masonry-grid {
     column-count: 3;
+    column-gap: 24px;
   }
 }
 
 .masonry-item {
   break-inside: avoid;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+}
+
+@media (min-width: 768px) {
+  .masonry-item {
+    margin-bottom: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .masonry-item {
+    margin-bottom: 24px;
+  }
+}
+
+/* === RESPONSIVE FONT SIZES === */
+@media (max-width: 767px) {
+  :root {
+    --font-size-display-lg: 32px;
+    --font-size-display-lg--line-height: 40px;
+    --font-size-headline-md: 20px;
+    --font-size-headline-md--line-height: 28px;
+  }
+}
+
+/* === MINIMUM TOUCH TARGET === */
+.min-touch-target {
+  min-width: 44px;
+  min-height: 44px;
 }
 
 /* === ANIMATIONS === */

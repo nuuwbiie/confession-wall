@@ -122,9 +122,9 @@ export default function CommentModal({ confession, isOpen, onClose }: CommentMod
       />
 
       {/* Modal */}
-      <div className="relative bg-surface-container-lowest rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col soft-shadow border border-outline-variant/10 animate-fadeIn">
+      <div className="relative bg-surface-container-lowest rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col soft-shadow border border-outline-variant/10 animate-fadeIn mx-2 md:mx-0">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/10">
+        <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-outline-variant/10">
           <h2 className="font-headline-md text-headline-md text-on-surface">
             Komentar
           </h2>
@@ -137,9 +137,9 @@ export default function CommentModal({ confession, isOpen, onClose }: CommentMod
         </div>
 
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+        <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-4">
           {/* Original confession card */}
-          <div className="bg-surface-container-low rounded-2xl p-6 mb-6 border border-outline-variant/10">
+          <div className="bg-surface-container-low rounded-2xl p-4 md:p-6 mb-6 border border-outline-variant/10">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-xs px-2 py-0.5 rounded-full bg-tertiary-container/30 text-on-tertiary-container">
                 Anonim
@@ -207,7 +207,7 @@ export default function CommentModal({ confession, isOpen, onClose }: CommentMod
         {/* Comment input */}
         <form
           onSubmit={handleSubmit}
-          className="border-t border-outline-variant/10 px-6 py-4 flex gap-3"
+          className="border-t border-outline-variant/10 px-4 md:px-6 py-3 md:py-4 flex gap-2 md:gap-3"
         >
           <input
             type="text"
@@ -221,14 +221,14 @@ export default function CommentModal({ confession, isOpen, onClose }: CommentMod
           <button
             type="submit"
             disabled={!newComment.trim() || submitting}
-            className="bg-primary text-on-primary px-5 py-2.5 rounded-full font-label-sm text-label-sm font-bold hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+            className="bg-primary text-on-primary px-4 md:px-5 py-2.5 rounded-full font-label-sm text-label-sm font-bold hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
           >
             {submitting ? (
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               <span className="material-symbols-outlined text-sm">send</span>
             )}
-            Kirim
+            <span className="hidden md:inline">Kirim</span>
           </button>
         </form>
       </div>

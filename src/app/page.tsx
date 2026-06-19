@@ -160,10 +160,10 @@ export default function HomePage() {
       {/* Floating Action Button */}
       <Link
         href="/confess"
-        className="fixed bottom-8 right-8 bg-primary text-on-primary rounded-full px-6 py-4 flex items-center gap-3 shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 z-50"
+        className="fixed bottom-4 right-4 md:bottom-8 md:right-8 bg-primary text-on-primary rounded-full px-4 py-3 md:px-6 md:py-4 flex items-center gap-2 md:gap-3 shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 z-50"
       >
-        <span className="material-symbols-outlined">add_circle</span>
-        <span className="font-label-sm text-label-sm font-bold hidden sm:inline">
+        <span className="material-symbols-outlined text-xl md:text-2xl">add_circle</span>
+        <span className="font-label-sm text-label-sm font-bold hidden md:inline">
           Write a Confession
         </span>
       </Link>

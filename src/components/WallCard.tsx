@@ -106,7 +106,7 @@ export default function WallCard({
   const statusBadge = STATUS_BADGE_MAP[data.status];
 
   return (
-    <article className="masonry-item bg-surface-container-lowest rounded-2xl p-8 soft-shadow soft-shadow-hover transition-all duration-300 border border-outline-variant/10 group">
+    <article className="masonry-item bg-surface-container-lowest rounded-2xl p-5 md:p-8 soft-shadow soft-shadow-hover transition-all duration-300 border border-outline-variant/10 group">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <span

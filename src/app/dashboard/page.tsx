@@ -286,7 +286,7 @@ export default function DashboardPage() {
                       key={confession.id}
                       className="hover:bg-surface-container-low/30 transition-colors group"
                     >
-                      <td className="px-8 py-6">
+                      <td className="px-4 md:px-8 py-4 md:py-6">
                         <div className="flex flex-col gap-1">
                           <p className="text-on-surface font-body-md line-clamp-1">
                             &ldquo;{confession.content.slice(0, 80)}...&rdquo;
@@ -299,7 +299,7 @@ export default function DashboardPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-6">
+                      <td className="px-3 md:px-6 py-4 md:py-6">
                         <span
                           className={`px-3 py-1 font-label-sm text-[12px] rounded-full border ${
                             confession.is_public !== false
@@ -310,11 +310,11 @@ export default function DashboardPage() {
                           {confession.is_public !== false ? "Public" : "Private"}
                         </span>
                       </td>
-                      <td className="px-6 py-6">
+                      <td className="px-3 md:px-6 py-4 md:py-6">
                         <StatusBadge status={confession.status} />
                       </td>
-                      <td className="px-6 py-6 text-right">
-                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <td className="px-4 md:px-6 py-4 md:py-6 text-right">
+                        <div className="flex justify-end gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                           {confession.status === "pending" && (
                             <>
                               <button
@@ -379,7 +379,7 @@ export default function DashboardPage() {
                 <p className="text-on-surface font-body-md mb-3 line-clamp-2">
                   &ldquo;{confession.content.slice(0, 100)}...&rdquo;
                 </p>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center gap-3">
                   <span
                     className={`px-2 py-0.5 font-label-sm text-[11px] rounded-full border ${
                       confession.is_public !== false
@@ -389,14 +389,15 @@ export default function DashboardPage() {
                   >
                     {confession.is_public !== false ? "Public" : "Private"}
                   </span>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1">
                     {confession.status === "pending" && (
                       <button
                         onClick={() => handleAction(confession.id, "approve")}
                         disabled={actionLoading === confession.id}
-                        className="p-1.5 rounded-full text-secondary hover:bg-secondary-container/20 transition-colors disabled:opacity-30"
+                        className="min-touch-target p-2 rounded-full text-secondary hover:bg-secondary-container/20 transition-colors disabled:opacity-30 flex items-center justify-center"
+                        title="Setujui"
                       >
-                        <span className="material-symbols-outlined text-[18px]">
+                        <span className="material-symbols-outlined text-[20px]">
                           check_circle
                         </span>
                       </button>
@@ -404,9 +405,10 @@ export default function DashboardPage() {
                     <button
                       onClick={() => handleAction(confession.id, "delete")}
                       disabled={actionLoading === confession.id}
-                      className="p-1.5 rounded-full text-error hover:bg-error-container/20 transition-colors disabled:opacity-30"
+                      className="min-touch-target p-2 rounded-full text-error hover:bg-error-container/20 transition-colors disabled:opacity-30 flex items-center justify-center"
+                      title="Hapus"
                     >
-                      <span className="material-symbols-outlined text-[18px]">
+                      <span className="material-symbols-outlined text-[20px]">
                         delete
                       </span>
                     </button>

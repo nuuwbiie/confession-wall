@@ -66,7 +66,7 @@ export default function ConfessionForm() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Main Form Card */}
-      <div className="bg-surface-container-lowest rounded-2xl p-8 md:p-10 soft-shadow border border-outline-variant/10">
+      <div className="bg-surface-container-lowest rounded-2xl p-5 md:p-10 soft-shadow border border-outline-variant/10">
         <h2 className="font-headline-md text-headline-md text-on-surface mb-2">
           Bagikan Ceritamu
         </h2>
@@ -247,8 +247,8 @@ export default function ConfessionForm() {
             </button>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
             {/* Preview Toggle Button */}
             <button
               type="button"
