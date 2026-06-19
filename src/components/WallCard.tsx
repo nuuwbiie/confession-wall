@@ -56,21 +56,25 @@ export default function WallCard({
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(data.likes || 0);
 
-  // Fetch initial liked state from server on mount
+  // Fetch initial liked state from server on mount (count already comes from props via API)
   useEffect(() => {
     const fetchLikeState = async () => {
       try {
         const res = await fetch(`/api/confessions/${data.id}/like`);
         const result = await res.json();
-        if (result.likes !== undefined) {
-          setLikeCount(result.likes);
+        if (result.liked !== undefined) {
           setLiked(result.liked);
+          // Only override count if the server returns a different value (e.g. race condition)
+          if (result.likes !== undefined && result.likes !== likeCount) {
+            setLikeCount(result.likes);
+          }
         }
       } catch {
         // Use defaults from props
       }
     };
     fetchLikeState();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.id]);
 
   const handleLike = async () => {

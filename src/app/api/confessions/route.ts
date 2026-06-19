@@ -30,7 +30,12 @@ export async function GET(request: Request) {
   // Use admin client for pending reads (bypass RLS), anon for published
   const supabase = status === "pending" ? getAdminClient() : getAnonClient();
 
-  let query = supabase.from("confessions").select("*", { count: "exact" });
+  let query = supabase
+    .from("confessions")
+    .select(
+      "*, likes(count), comments(count)",
+      { count: "exact" }
+    );
 
   if (status === "pending") {
     query = query.eq("status", "pending");
@@ -46,8 +51,15 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Flatten the likes(count) and comments(count) subqueries into plain numbers
+  const mappedData = (data || []).map((item: any) => ({
+    ...item,
+    likes: item.likes?.[0]?.count ?? 0,
+    comments: item.comments?.[0]?.count ?? 0,
+  }));
+
   return NextResponse.json({
-    data: data || [],
+    data: mappedData,
     count: count || 0,
     offset,
     limit,
@@ -102,22 +114,45 @@ export async function POST(request: Request) {
       // Not authenticated
     }
 
+    // Try insert with is_anonymous first; fallback if column doesn't exist in schema cache
+    let insertPayload: Record<string, any> = {
+      content: content.trim(),
+      font: font || "sans",
+      is_public: is_public !== false,
+      allow_replies: allow_replies !== false,
+      status: "pending",
+      user_id: userId,
+      created_at: new Date().toISOString(),
+    };
+
+    // Only include is_anonymous if user explicitly set it (the column exists in migration)
+    if (is_anonymous !== undefined) {
+      insertPayload.is_anonymous = is_anonymous !== false;
+    }
+
     const { data, error } = await supabase
       .from("confessions")
-      .insert({
-        content: content.trim(),
-        font: font || "sans",
-        is_public: is_public !== false,
-        allow_replies: allow_replies !== false,
-        is_anonymous: is_anonymous !== false,
-        status: "pending",
-        user_id: userId,
-        created_at: new Date().toISOString(),
-      })
+      .insert(insertPayload)
       .select()
       .single();
 
     if (error) {
+      // If error is about is_anonymous column, retry without it
+      if (error.message && error.message.toLowerCase().includes("is_anonymous")) {
+        delete insertPayload.is_anonymous;
+        const retryResult = await supabase
+          .from("confessions")
+          .insert(insertPayload)
+          .select()
+          .single();
+
+        if (retryResult.error) {
+          return NextResponse.json({ error: retryResult.error.message }, { status: 500 });
+        }
+
+        return NextResponse.json({ data: retryResult.data, success: true }, { status: 201 });
+      }
+
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
