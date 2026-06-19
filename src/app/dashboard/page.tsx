@@ -12,6 +12,26 @@ export default function DashboardPage() {
   const [isAdminUser, setIsAdminUser] = useState<boolean | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  const fetchAll = async () => {
+    setLoading(true);
+    try {
+      const [pubRes, pendRes] = await Promise.all([
+        fetch("/api/confessions?status=published&limit=50"),
+        fetch("/api/confessions?status=pending&limit=50"),
+      ]);
+      const pub = await pubRes.json();
+      const pend = await pendRes.json();
+      setAllConfessions([
+        ...(pend.data || []),
+        ...(pub.data || []),
+      ]);
+    } catch {
+      console.error("Failed to fetch");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Check admin status on mount
   useEffect(() => {
     const checkAdmin = async () => {
@@ -41,26 +61,6 @@ export default function DashboardPage() {
 
     checkAdmin();
   }, []);
-
-  const fetchAll = async () => {
-    setLoading(true);
-    try {
-      const [pubRes, pendRes] = await Promise.all([
-        fetch("/api/confessions?status=published&limit=50"),
-        fetch("/api/confessions?status=pending&limit=50"),
-      ]);
-      const pub = await pubRes.json();
-      const pend = await pendRes.json();
-      setAllConfessions([
-        ...(pend.data || []),
-        ...(pub.data || []),
-      ]);
-    } catch {
-      console.error("Failed to fetch");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const [approveAllLoading, setApproveAllLoading] = useState(false);
 

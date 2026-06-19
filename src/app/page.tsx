@@ -19,11 +19,6 @@ export default function HomePage() {
   // Pending count
   const [pendingCount, setPendingCount] = useState(0);
 
-  useEffect(() => {
-    fetchConfessions();
-    fetchPendingCount();
-  }, []);
-
   const fetchConfessions = async () => {
     try {
       const res = await fetch("/api/confessions?status=published&limit=50");
@@ -50,6 +45,12 @@ export default function HomePage() {
     }
   };
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchConfessions();
+    fetchPendingCount();
+  }, []);
+
   const openComments = (confession: WallCardData) => {
     setSelectedConfession(confession);
     setCommentModalOpen(true);
@@ -70,7 +71,7 @@ export default function HomePage() {
           </h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant">
             Welcome to the collective exhale. Every card here is a piece of
-            someone's heart, shared in safe silence.
+            someone&apos;s heart, shared in safe silence.
           </p>
         </div>
 

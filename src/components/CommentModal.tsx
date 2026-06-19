@@ -39,21 +39,42 @@ export default function CommentModal({ confession, isOpen, onClose }: CommentMod
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  // Sync state when confession or open state changes during render
+  const [prevConfessionId, setPrevConfessionId] = useState(confession.id);
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+
+  if (confession.id !== prevConfessionId || isOpen !== prevIsOpen) {
+    setPrevConfessionId(confession.id);
+    setPrevIsOpen(isOpen);
     if (isOpen) {
+      setComments([]);
       setLoading(true);
       setError(null);
-      fetch(`/api/confessions/${confession.id}/comments`)
-        .then((res) => res.json())
-        .then((result) => {
+    }
+  }
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let ignore = false;
+    fetch(`/api/confessions/${confession.id}/comments`)
+      .then((res) => res.json())
+      .then((result) => {
+        if (!ignore) {
           setComments(result.data || []);
           setLoading(false);
-        })
-        .catch(() => {
+        }
+      })
+      .catch(() => {
+        if (!ignore) {
           setError("Gagal memuat komentar");
           setLoading(false);
-        });
-    }
+        }
+      });
+
+    return () => {
+      ignore = true;
+    };
   }, [isOpen, confession.id]);
 
   useEffect(() => {

@@ -51,7 +51,7 @@ export async function GET() {
       published: ids.length,
       message: `Successfully published ${ids.length} confession(s)`,
     });
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
