@@ -1,11 +1,33 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
 function getAdminClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
+}
+
+async function getAuthUserId(): Promise<string | null> {
+  try {
+    const cookieStore = await cookies();
+    const authClient = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() { return cookieStore.getAll(); },
+          setAll() {},
+        },
+      }
+    );
+    const { data: { user } } = await authClient.auth.getUser();
+    return user?.id ?? null;
+  } catch {
+    return null;
+  }
 }
 
 // GET /api/confessions/[id]/comments - Fetch comments for a confession
@@ -29,13 +51,22 @@ export async function GET(
   return NextResponse.json({ data: data || [] });
 }
 
-// POST /api/confessions/[id]/comments - Add a comment to a confession
+// POST /api/confessions/[id]/comments - Add a comment (authenticated only)
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   const supabase = getAdminClient();
+
+  // Require authentication
+  const userId = await getAuthUserId();
+  if (!userId) {
+    return NextResponse.json(
+      { error: "Anda harus login untuk memberikan komentar" },
+      { status: 401 }
+    );
+  }
 
   // Check confession exists and allows replies
   const { data: confession, error: fetchError } = await supabase
@@ -68,7 +99,7 @@ export async function POST(
     .insert({
       confession_id: id,
       content: content.trim(),
-      user_id: null, // anonymous for now
+      user_id: userId, // store authenticated user id
     })
     .select()
     .single();

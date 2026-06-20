@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { useAuth } from "./AuthProvider";
 
 const NAV_ITEMS = [
   { href: "/", label: "The Wall" },
@@ -23,7 +24,7 @@ interface UserConfession {
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const { user, openLoginModal } = useAuth();
   const [username, setUsername] = useState<string | null>(null);
   const [avatarDropdownOpen, setAvatarDropdownOpen] = useState(false);
   const [userConfessions, setUserConfessions] = useState<UserConfession[]>([]);
@@ -60,45 +61,20 @@ export default function Header() {
   }, [mobileMenuOpen]);
 
   useEffect(() => {
+    if (!user) {
+      setUsername(null);
+      return;
+    }
     const supabase = createClient();
-
-    // Check current user
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-      if (user) {
-        // Fetch profile
-        supabase
-          .from("profiles")
-          .select("username")
-          .eq("id", user.id)
-          .single()
-          .then(({ data }) => {
-            if (data) setUsername(data.username);
-          });
-      }
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        supabase
-          .from("profiles")
-          .select("username")
-          .eq("id", session.user.id)
-          .single()
-          .then(({ data }) => {
-            if (data) setUsername(data.username);
-          });
-      } else {
-        setUsername(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data) setUsername(data.username);
+      });
+  }, [user]);
 
   const fetchUserConfessions = async () => {
     setUserConfessionsLoading(true);
@@ -124,7 +100,6 @@ export default function Header() {
   const handleSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    setUser(null);
     setUsername(null);
     setAvatarDropdownOpen(false);
     router.refresh();
@@ -254,12 +229,12 @@ export default function Header() {
                 )}
               </div>
             ) : (
-              <Link
-                href="/login"
-                className="bg-primary text-on-primary px-4 py-2 rounded-full font-label-sm text-label-sm font-bold hover:opacity-90 transition-all duration-200 shadow-sm whitespace-nowrap"
+              <button
+                onClick={openLoginModal}
+                className="bg-primary text-on-primary px-4 py-2 rounded-full font-label-sm text-label-sm font-bold hover:opacity-90 transition-all duration-200 shadow-sm whitespace-nowrap cursor-pointer"
               >
                 Masuk
-              </Link>
+              </button>
             )}
 
             {/* Mobile hamburger button */}

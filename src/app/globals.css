@@ -206,6 +206,20 @@ body {
   animation: fadeIn 0.3s ease-out;
 }
 
+/* === SLIDE UP ANIMATION === */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out;
+}
+
 /* === SELECTION === */
 ::selection {
   background-color: var(--color-primary-container);

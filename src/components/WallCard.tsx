@@ -48,10 +48,14 @@ export default function WallCard({
   data,
   showStatus = false,
   onCommentClick,
+  user,
+  onRequireLogin,
 }: {
   data: WallCardData;
   showStatus?: boolean;
   onCommentClick?: () => void;
+  user?: { id: string } | null;
+  onRequireLogin?: () => void;
 }) {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(data.likes || 0);
@@ -78,6 +82,12 @@ export default function WallCard({
   }, [data.id]);
 
   const handleLike = async () => {
+    // Require login for liking
+    if (!user) {
+      onRequireLogin?.();
+      return;
+    }
+
     const newLiked = !liked;
     const action = newLiked ? "like" : "unlike";
 

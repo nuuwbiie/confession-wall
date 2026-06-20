@@ -1,13 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { generateUsername } from "@/lib/username-generator";
 import { usernameToEmail, validateUsername } from "@/lib/auth-helpers";
 
-export default function LoginPage() {
-  const router = useRouter();
+interface LoginModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSkip: () => void;
+  onSuccess?: () => void;
+}
+
+export default function LoginModal({ isOpen, onClose, onSkip, onSuccess }: LoginModalProps) {
   const supabase = createClient();
   const [isRegister, setIsRegister] = useState(false);
   const [username, setUsername] = useState(generateUsername());
@@ -15,6 +20,16 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [benefitsExpanded, setBenefitsExpanded] = useState(false);
+
+  // Reset state when modal opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      setError(null);
+      setSuccessMessage(null);
+      setLoading(false);
+    }
+  }, [isOpen]);
 
   const handleUsernameChange = (value: string) => {
     const lower = value.toLowerCase().replace(/[^a-z0-9_]/g, "");
@@ -82,27 +97,92 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/");
-      router.refresh();
+      onSuccess?.();
+      onClose();
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="flex items-center justify-center min-h-[80vh] px-margin-mobile md:px-margin-desktop">
-      <div className="w-full max-w-md">
-        <div className="bg-surface-container-lowest rounded-2xl p-8 md:p-10 soft-shadow border border-outline-variant/10">
-          <div className="text-center mb-8">
-            <h1 className="font-headline-md text-headline-md text-primary mb-2">
-              {isRegister ? "Buat Akun" : "Masuk"}
-            </h1>
-            <p className="font-body-md text-body-md text-on-surface-variant">
-              {isRegister
-                ? "Pilih username unik untuk identitas anonimmu"
-                : "Masuk pakai username untuk lihat riwayat confession-mu"}
-            </p>
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="relative bg-surface-container-lowest rounded-3xl w-full max-w-md max-h-[90vh] overflow-y-auto soft-shadow border border-outline-variant/10 animate-fadeIn mx-2">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/10">
+          <h2 className="font-headline-md text-headline-md text-on-surface">
+            {isRegister ? "Buat Akun" : "Masuk"}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full hover:bg-surface-container transition-colors"
+          >
+            <span className="material-symbols-outlined text-on-surface-variant">close</span>
+          </button>
+        </div>
+
+        <div className="p-6">
+          {/* Benefits section - collapsible */}
+          <div className="mb-6 bg-primary-container/20 rounded-2xl border border-primary-container/30 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setBenefitsExpanded(!benefitsExpanded)}
+              className="w-full flex items-center justify-between p-4 text-left hover:bg-primary-container/10 transition-colors"
+            >
+              <span className="font-label-sm text-label-sm text-primary font-semibold">
+                Login untuk mengakses lebih banyak fitur
+              </span>
+              <span className={`material-symbols-outlined text-primary transition-transform duration-200 ${benefitsExpanded ? 'rotate-180' : ''}`}>
+                expand_more
+              </span>
+            </button>
+
+            {benefitsExpanded && (
+              <div className="px-4 pb-4 space-y-3 animate-fadeIn">
+                {/* Login benefits */}
+                <div>
+                  <p className="text-xs text-primary/70 font-medium mb-2">Dengan login kamu bisa:</p>
+                  <ul className="space-y-2">
+                    {[
+                      { icon: "favorite", text: "Menyukai confession orang lain" },
+                      { icon: "chat", text: "Memberi komentar pada confession" },
+                      { icon: "reply", text: "Mendapatkan balasan dari confessionmu" },
+                      { icon: "history", text: "Melihat riwayat confessionmu" },
+                    ].map((item) => (
+                      <li key={item.text} className="flex items-center gap-2 text-sm text-on-surface-variant">
+                        <span className="material-symbols-outlined text-primary text-sm">{item.icon}</span>
+                        {item.text}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Without login */}
+                <div className="pt-3 border-t border-primary-container/30">
+                  <p className="text-xs text-on-surface-variant/50 font-medium mb-2">Tanpa login kamu tetap bisa:</p>
+                  <ul className="space-y-1.5">
+                    {[
+                      { icon: "visibility", text: "Melihat semua confession" },
+                      { icon: "edit_note", text: "Mengirim confession anonim" },
+                    ].map((item) => (
+                      <li key={item.text} className="flex items-center gap-2 text-sm text-on-surface-variant/70">
+                        <span className="material-symbols-outlined text-on-surface-variant/50 text-sm">{item.icon}</span>
+                        {item.text}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Username */}
             <div>
               <label className="font-label-sm text-label-sm text-on-surface-variant mb-2 block">
@@ -190,7 +270,7 @@ export default function LoginPage() {
           </form>
 
           {/* Toggle login/register */}
-          <div className="mt-6 text-center">
+          <div className="mt-4 text-center">
             <p className="font-body-md text-body-md text-on-surface-variant">
               {isRegister ? "Sudah punya akun?" : "Belum punya akun?"}{" "}
               <button
@@ -207,12 +287,15 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Anonymous note */}
-          <div className="mt-4 p-3 bg-surface-container-low rounded-xl text-center">
-            <p className="font-label-sm text-label-sm text-on-surface-variant/70">
-              <span className="material-symbols-outlined text-sm align-middle mr-1">info</span>
-              Login bersifat opsional. Kamu tetap bisa menggunakan website tanpa login.
-            </p>
+          {/* Skip button */}
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={onSkip}
+              className="w-full py-3 rounded-full font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-container-low transition-colors border border-outline-variant/20"
+            >
+              Skip Login — Lanjutkan sebagai tamu
+            </button>
           </div>
         </div>
       </div>

@@ -6,11 +6,15 @@ import MasonryGrid from "@/components/MasonryGrid";
 import CommentModal from "@/components/CommentModal";
 import { SkeletonGrid } from "@/components/SkeletonCard";
 import Link from "next/link";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function HomePage() {
   const [confessions, setConfessions] = useState<WallCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Auth
+  const { user, openLoginModal } = useAuth();
 
   // Comment modal state
   const [selectedConfession, setSelectedConfession] = useState<WallCardData | null>(null);
@@ -71,7 +75,7 @@ export default function HomePage() {
           </h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant">
             Welcome to the collective exhale. Every card here is a piece of
-            someone&apos;s heart, shared in safe silence.
+            someone's heart, shared in safe silence.
           </p>
         </div>
 
@@ -128,6 +132,8 @@ export default function HomePage() {
                   key={confession.id}
                   data={confession}
                   onCommentClick={() => openComments(confession)}
+                  user={user}
+                  onRequireLogin={openLoginModal}
                 />
               ))}
             </MasonryGrid>
@@ -154,6 +160,8 @@ export default function HomePage() {
           confession={selectedConfession}
           isOpen={commentModalOpen}
           onClose={closeComments}
+          user={user}
+          onRequireLogin={openLoginModal}
         />
       )}
 

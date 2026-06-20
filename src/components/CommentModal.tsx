@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import type { WallCardData } from "./WallCard";
+import LoginModal from "./LoginModal";
 
 interface Comment {
   id: string;
@@ -14,6 +15,8 @@ interface CommentModalProps {
   confession: WallCardData;
   isOpen: boolean;
   onClose: () => void;
+  user: { id: string } | null;
+  onRequireLogin: () => void;
 }
 
 function getTimeAgo(dateStr: string): string {
@@ -31,13 +34,15 @@ function getTimeAgo(dateStr: string): string {
   return date.toLocaleDateString("id-ID");
 }
 
-export default function CommentModal({ confession, isOpen, onClose }: CommentModalProps) {
+export default function CommentModal({ confession, isOpen, onClose, user, onRequireLogin }: CommentModalProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // Sync state when confession or open state changes during render
   const [prevConfessionId, setPrevConfessionId] = useState(confession.id);
@@ -52,6 +57,44 @@ export default function CommentModal({ confession, isOpen, onClose }: CommentMod
       setError(null);
     }
   }
+
+  // Detect mobile
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  // Lock body scroll for mobile bottom sheet
+  useEffect(() => {
+    if (!isOpen || !isMobile) return;
+
+    const contentEl = contentRef.current;
+    if (!contentEl) return;
+
+    const handleTouchMove = (e: TouchEvent) => {
+      // Only prevent default if scrolling within the content area
+      if (contentEl.scrollTop > 0 && contentEl.scrollTop < contentEl.scrollHeight - contentEl.clientHeight) {
+        return;
+      }
+    };
+
+    document.addEventListener("touchmove", handleTouchMove, { passive: true });
+    return () => document.removeEventListener("touchmove", handleTouchMove);
+  }, [isOpen, isMobile]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -86,6 +129,10 @@ export default function CommentModal({ confession, isOpen, onClose }: CommentMod
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
+    if (!user) {
+      onRequireLogin();
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -113,6 +160,168 @@ export default function CommentModal({ confession, isOpen, onClose }: CommentMod
 
   if (!isOpen) return null;
 
+  // Mobile bottom sheet version
+  if (isMobile) {
+    return (
+      <div className="fixed inset-0 z-[100]">
+        {/* Backdrop */}
+        <div
+          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          onClick={onClose}
+        />
+
+        {/* Bottom sheet */}
+        <div className="absolute bottom-0 left-0 right-0 bg-surface-container-lowest rounded-t-3xl flex flex-col animate-slideUp">
+          {/* Drag handle */}
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 rounded-full bg-outline-variant/50" />
+          </div>
+
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-3 border-b border-outline-variant/10">
+            <h2 className="font-headline-md text-headline-md text-on-surface">
+              Komentar
+            </h2>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full hover:bg-surface-container transition-colors"
+            >
+              <span className="material-symbols-outlined text-on-surface-variant">close</span>
+            </button>
+          </div>
+
+          {/* Fixed height content area: h-[65vh] */}
+          <div className="flex flex-col" style={{ height: "65vh" }}>
+            {/* Scrollable comments */}
+            <div ref={contentRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+              {/* Original confession card */}
+              <div className="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/10">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-tertiary-container/30 text-on-tertiary-container">
+                    Anonim
+                  </span>
+                  <span className="text-[11px] text-on-surface-variant/60">
+                    {getTimeAgo(confession.created_at)}
+                  </span>
+                </div>
+                <p className="text-on-surface font-body-md whitespace-pre-line">
+                  {confession.content}
+                </p>
+              </div>
+
+              {/* Loading state */}
+              {loading && (
+                <div className="text-center py-8">
+                  <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto" />
+                </div>
+              )}
+
+              {/* Error state */}
+              {error && !loading && (
+                <div className="flex items-center gap-2 p-3 bg-error-container/30 text-on-error-container rounded-xl text-sm">
+                  <span className="material-symbols-outlined text-sm">error</span>
+                  {error}
+                </div>
+              )}
+
+              {/* Login gate */}
+              {!user && !loading && (
+                <div className="text-center py-6 px-4 bg-primary-container/10 rounded-2xl border border-dashed border-primary-container/30">
+                  <span className="material-symbols-outlined text-2xl text-primary mb-2">
+                    lock
+                  </span>
+                  <p className="text-sm text-on-surface-variant mb-3">
+                    Login untuk melihat dan memberikan komentar
+                  </p>
+                  <button
+                    onClick={onRequireLogin}
+                    className="bg-primary text-on-primary px-5 py-2 rounded-full font-label-sm text-label-sm font-bold hover:opacity-90 transition-all"
+                  >
+                    Login
+                  </button>
+                </div>
+              )}
+
+              {/* Empty state */}
+              {!loading && !error && user && comments.length === 0 && (
+                <div className="text-center py-8">
+                  <span className="material-symbols-outlined text-3xl text-outline-variant mb-2">
+                    chat_bubble_outline
+                  </span>
+                  <p className="text-on-surface-variant/60 font-label-sm text-label-sm">
+                    Belum ada komentar. Jadilah yang pertama!
+                  </p>
+                </div>
+              )}
+
+              {/* Comments list */}
+              {!loading && user && comments.map((comment) => (
+                <div
+                  key={comment.id}
+                  className="bg-surface-container-low rounded-xl p-4"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center">
+                      <span className="text-[10px] text-primary font-bold">
+                        {comment.user_id ? "U" : "A"}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-on-surface-variant/60">
+                      {comment.user_id ? "User" : "Anonim"} &middot; {getTimeAgo(comment.created_at)}
+                    </span>
+                  </div>
+                  <p className="text-on-surface font-body-md text-sm whitespace-pre-line">
+                    {comment.content}
+                  </p>
+                </div>
+              ))}
+              <div ref={bottomRef} />
+            </div>
+
+            {/* Comment input - only show if logged in */}
+            {user ? (
+              <form
+                onSubmit={handleSubmit}
+                className="border-t border-outline-variant/10 px-5 py-3 flex gap-2"
+              >
+                <input
+                  type="text"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Tulis komentar..."
+                  maxLength={500}
+                  className="flex-1 bg-surface-container-low border border-outline-variant/30 rounded-full px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/30 outline-none transition-all"
+                  disabled={submitting}
+                />
+                <button
+                  type="submit"
+                  disabled={!newComment.trim() || submitting}
+                  className="bg-primary text-on-primary px-4 py-2.5 rounded-full font-label-sm text-label-sm font-bold hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+                >
+                  {submitting ? (
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <span className="material-symbols-outlined text-sm">send</span>
+                  )}
+                </button>
+              </form>
+            ) : (
+              <div className="border-t border-outline-variant/10 px-5 py-3">
+                <button
+                  onClick={onRequireLogin}
+                  className="w-full py-3 rounded-full border border-outline-variant/30 text-sm text-on-surface-variant hover:bg-surface-container-low transition-colors"
+                >
+                  Login untuk berkomentar
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop modal version
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Backdrop */}
@@ -121,10 +330,10 @@ export default function CommentModal({ confession, isOpen, onClose }: CommentMod
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="relative bg-surface-container-lowest rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col soft-shadow border border-outline-variant/10 animate-fadeIn mx-2 md:mx-0">
+      {/* Modal with fixed height */}
+      <div className="relative bg-surface-container-lowest rounded-3xl w-full max-w-2xl flex flex-col soft-shadow border border-outline-variant/10 animate-fadeIn mx-2 md:mx-0" style={{ height: "600px" }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-outline-variant/10">
+        <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-outline-variant/10 shrink-0">
           <h2 className="font-headline-md text-headline-md text-on-surface">
             Komentar
           </h2>
@@ -136,8 +345,8 @@ export default function CommentModal({ confession, isOpen, onClose }: CommentMod
           </button>
         </div>
 
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-4">
+        {/* Scrollable content with fixed remaining height */}
+        <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-4 min-h-0">
           {/* Original confession card */}
           <div className="bg-surface-container-low rounded-2xl p-4 md:p-6 mb-6 border border-outline-variant/10">
             <div className="flex items-center gap-2 mb-3">
@@ -168,8 +377,26 @@ export default function CommentModal({ confession, isOpen, onClose }: CommentMod
             </div>
           )}
 
+          {/* Login gate */}
+          {!user && !loading && (
+            <div className="text-center py-6 px-4 bg-primary-container/10 rounded-2xl border border-dashed border-primary-container/30">
+              <span className="material-symbols-outlined text-2xl text-primary mb-2">
+                lock
+              </span>
+              <p className="text-sm text-on-surface-variant mb-3">
+                Login untuk melihat dan memberikan komentar
+              </p>
+              <button
+                onClick={onRequireLogin}
+                className="bg-primary text-on-primary px-5 py-2 rounded-full font-label-sm text-label-sm font-bold hover:opacity-90 transition-all"
+              >
+                Login
+              </button>
+            </div>
+          )}
+
           {/* Empty state */}
-          {!loading && comments.length === 0 && !error && (
+          {!loading && !error && user && comments.length === 0 && (
             <div className="text-center py-8">
               <span className="material-symbols-outlined text-3xl text-outline-variant mb-2">
                 chat_bubble_outline
@@ -181,7 +408,7 @@ export default function CommentModal({ confession, isOpen, onClose }: CommentMod
           )}
 
           {/* Comments list */}
-          {!loading && comments.map((comment) => (
+          {!loading && user && comments.map((comment) => (
             <div
               key={comment.id}
               className="bg-surface-container-low rounded-xl p-4"
@@ -204,33 +431,44 @@ export default function CommentModal({ confession, isOpen, onClose }: CommentMod
           <div ref={bottomRef} />
         </div>
 
-        {/* Comment input */}
-        <form
-          onSubmit={handleSubmit}
-          className="border-t border-outline-variant/10 px-4 md:px-6 py-3 md:py-4 flex gap-2 md:gap-3"
-        >
-          <input
-            type="text"
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Tulis komentar..."
-            maxLength={500}
-            className="flex-1 bg-surface-container-low border border-outline-variant/30 rounded-full px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/30 outline-none transition-all"
-            disabled={submitting}
-          />
-          <button
-            type="submit"
-            disabled={!newComment.trim() || submitting}
-            className="bg-primary text-on-primary px-4 md:px-5 py-2.5 rounded-full font-label-sm text-label-sm font-bold hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+        {/* Comment input - only show if logged in */}
+        {user ? (
+          <form
+            onSubmit={handleSubmit}
+            className="border-t border-outline-variant/10 px-4 md:px-6 py-3 md:py-4 flex gap-2 md:gap-3 shrink-0"
           >
-            {submitting ? (
-              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <span className="material-symbols-outlined text-sm">send</span>
-            )}
-            <span className="hidden md:inline">Kirim</span>
-          </button>
-        </form>
+            <input
+              type="text"
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Tulis komentar..."
+              maxLength={500}
+              className="flex-1 bg-surface-container-low border border-outline-variant/30 rounded-full px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/30 outline-none transition-all"
+              disabled={submitting}
+            />
+            <button
+              type="submit"
+              disabled={!newComment.trim() || submitting}
+              className="bg-primary text-on-primary px-4 md:px-5 py-2.5 rounded-full font-label-sm text-label-sm font-bold hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+            >
+              {submitting ? (
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <span className="material-symbols-outlined text-sm">send</span>
+              )}
+              <span className="hidden md:inline">Kirim</span>
+            </button>
+          </form>
+        ) : (
+          <div className="border-t border-outline-variant/10 px-4 md:px-6 py-3 shrink-0">
+            <button
+              onClick={onRequireLogin}
+              className="w-full py-3 rounded-full border border-outline-variant/30 text-sm text-on-surface-variant hover:bg-surface-container-low transition-colors"
+            >
+              Login untuk berkomentar
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

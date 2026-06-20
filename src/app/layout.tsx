@@ -9,6 +9,8 @@ import {
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { AuthProvider } from "@/components/AuthProvider";
+import LoginModalWrapper from "@/components/LoginModalWrapper";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -64,9 +66,12 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-background text-on-background">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <AuthProvider>
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+          <LoginModalWrapper />
+        </AuthProvider>
       </body>
     </html>
   );
