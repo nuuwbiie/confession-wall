@@ -8,7 +8,7 @@ function getAdminClient() {
   );
 }
 
-// POST /api/moderate - HR moderation actions (approve, delete, reply, approve_all)
+// POST /api/moderate - HR moderation actions
 export async function POST(request: Request) {
   const supabase = getAdminClient();
 
@@ -17,36 +17,59 @@ export async function POST(request: Request) {
 
   switch (action) {
     case "approve_all": {
+      // Only approve public confessions, skip private ones
       const { error } = await supabase
         .from("confessions")
         .update({
           status: "published",
           published_at: new Date().toISOString(),
         })
-        .eq("status", "pending");
+        .eq("status", "pending")
+        .eq("is_public", true);
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
-      return NextResponse.json({ success: true, message: "All pending confessions approved and published" });
+      return NextResponse.json({ success: true, message: "All public pending confessions approved and published" });
     }
 
     case "approve": {
       if (!confession_id) {
         return NextResponse.json({ error: "confession_id is required for approve" }, { status: 400 });
       }
+
+      // Fetch the confession to check if it's private
+      const { data: confession } = await supabase
+        .from("confessions")
+        .select("is_public")
+        .eq("id", confession_id)
+        .single();
+
+      if (!confession) {
+        return NextResponse.json({ error: "Confession not found" }, { status: 404 });
+      }
+
+      // If private, set to rejected instead of published
+      const newStatus = confession.is_public === false ? "rejected" : "published";
+      const updateData: Record<string, any> = { status: newStatus };
+      if (newStatus === "published") {
+        updateData.published_at = new Date().toISOString();
+      }
+
       const { error } = await supabase
         .from("confessions")
-        .update({
-          status: "published",
-          published_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq("id", confession_id);
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
-      return NextResponse.json({ success: true, message: "Confession approved and published" });
+
+      const message = newStatus === "published"
+        ? "Confession approved and published"
+        : "Private confession has been filtered";
+
+      return NextResponse.json({ success: true, message });
     }
 
     case "delete": {

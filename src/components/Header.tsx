@@ -6,12 +6,7 @@ import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { useAuth } from "./AuthProvider";
-
-const NAV_ITEMS = [
-  { href: "/", label: "The Wall" },
-  { href: "/confess", label: "Confess" },
-  { href: "/dashboard", label: "Dashboard" },
-];
+import NotificationModal from "./NotificationModal";
 
 interface UserConfession {
   id: string;
@@ -21,22 +16,61 @@ interface UserConfession {
   is_anonymous: boolean;
 }
 
+interface Notification {
+  id: string;
+  confession_id: string;
+  type: string;
+  content: string;
+  is_read: boolean;
+  created_at: string;
+  confession_snippet?: string | null;
+}
+
+// Dynamic nav items - dashboard only shown for admin
+function getNavItems(isAdmin: boolean): { href: string; label: string }[] {
+  const items = [
+    { href: "/", label: "The Wall" },
+    { href: "/confess", label: "Confess" },
+  ];
+  if (isAdmin) {
+    items.push({ href: "/dashboard", label: "Dashboard" });
+  }
+  return items;
+}
+
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, openLoginModal } = useAuth();
   const [username, setUsername] = useState<string | null>(null);
   const [avatarDropdownOpen, setAvatarDropdownOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [userConfessions, setUserConfessions] = useState<UserConfession[]>([]);
   const [userConfessionsLoading, setUserConfessionsLoading] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Notifications
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const notificationsDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Notification modal state
+  const [selectedNotificationId, setSelectedNotificationId] = useState<string | null>(null);
+  const [notificationModalOpen, setNotificationModalOpen] = useState(false);
+
+  const navItems = getNavItems(isAdmin);
 
   // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setAvatarDropdownOpen(false);
+      }
+      if (notificationsDropdownRef.current && !notificationsDropdownRef.current.contains(e.target as Node)) {
+        setNotificationsOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -59,6 +93,18 @@ export default function Header() {
       document.body.style.overflow = "";
     };
   }, [mobileMenuOpen]);
+
+  // Check admin status
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+    fetch("/api/auth/check-admin")
+      .then((res) => res.json())
+      .then((data: { isAdmin: boolean }) => setIsAdmin(data.isAdmin))
+      .catch(() => setIsAdmin(false));
+  }, [user]);
 
   useEffect(() => {
     if (!user) {
@@ -105,6 +151,47 @@ export default function Header() {
     router.refresh();
   };
 
+  const fetchNotifications = async () => {
+    setNotificationsLoading(true);
+    try {
+      const res = await fetch("/api/notifications?limit=20");
+      const result = await res.json();
+      setNotifications(result.data || []);
+      setUnreadCount(result.unreadCount || 0);
+    } catch {
+      setNotifications([]);
+    } finally {
+      setNotificationsLoading(false);
+    }
+  };
+
+  const handleNotificationClick = async (notification: Notification) => {
+    // Mark as read
+    if (!notification.is_read) {
+      try {
+        await fetch(`/api/notifications/${notification.id}/read`, { method: "PUT" });
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notification.id ? { ...n, is_read: true } : n))
+        );
+      } catch {
+        // Ignore
+      }
+    }
+    // Close dropdown and open notification modal
+    setNotificationsOpen(false);
+    setSelectedNotificationId(notification.confession_id);
+    setNotificationModalOpen(true);
+  };
+
+  const handleNotificationsToggle = () => {
+    const newOpen = !notificationsOpen;
+    setNotificationsOpen(newOpen);
+    if (newOpen) {
+      fetchNotifications();
+    }
+  };
+
   function getTimeAgo(dateStr: string): string {
     const now = new Date();
     const date = new Date(dateStr);
@@ -132,7 +219,7 @@ export default function Header() {
               Confession Wall
             </Link>
             <div className="hidden md:flex gap-6">
-              {NAV_ITEMS.map((item) => (
+              {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -151,9 +238,68 @@ export default function Header() {
             {/* Auth Section */}
             {user ? (
               <div className="flex items-center gap-2 relative" ref={dropdownRef}>
-                <button className="p-2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer min-touch-target flex items-center justify-center" aria-label="Notifications">
-                  <span className="material-symbols-outlined">notifications</span>
-                </button>
+                {/* Notifications bell */}
+                <div className="relative" ref={notificationsDropdownRef}>
+                  <button
+                    onClick={handleNotificationsToggle}
+                    className="p-2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer min-touch-target flex items-center justify-center relative"
+                    aria-label="Notifications"
+                  >
+                    <span className="material-symbols-outlined">notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-error text-[10px] text-on-error font-bold rounded-full flex items-center justify-center">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Notifications dropdown */}
+                  {notificationsOpen && (
+                    <div className="absolute top-full right-0 mt-2 w-80 max-w-[calc(100vw-32px)] bg-surface-container-lowest rounded-2xl soft-shadow border border-outline-variant/10 overflow-hidden z-50">
+                      <div className="px-5 py-4 border-b border-outline-variant/10">
+                        <p className="font-label-sm text-label-sm text-on-surface font-medium">
+                          Notifikasi
+                        </p>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto">
+                        {notificationsLoading ? (
+                          <div className="flex justify-center py-6">
+                            <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                          </div>
+                        ) : notifications.length === 0 ? (
+                          <div className="text-center py-6">
+                            <p className="text-xs text-on-surface-variant/60">
+                              Belum ada notifikasi
+                            </p>
+                          </div>
+                        ) : (
+                          notifications.map((n) => (
+                            <button
+                              key={n.id}
+                              onClick={() => handleNotificationClick(n)}
+                              className={`w-full text-left px-5 py-3 hover:bg-surface-container-low/50 transition-colors border-b border-outline-variant/5 last:border-0 ${
+                                !n.is_read ? "bg-primary-container/10" : ""
+                              }`}
+                            >
+                              <p className="text-sm text-on-surface line-clamp-1">
+                                {n.content}
+                              </p>
+                              {n.confession_snippet && (
+                                <p className="text-[11px] text-on-surface-variant/60 mt-1 line-clamp-1">
+                                  &ldquo;{n.confession_snippet}...&rdquo;
+                                </p>
+                              )}
+                              <span className="text-[10px] text-on-surface-variant/40 mt-1 block">
+                                {getTimeAgo(n.created_at)}
+                              </span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <button
                   onClick={handleAvatarClick}
                   className="flex items-center gap-2 cursor-pointer"
@@ -266,7 +412,7 @@ export default function Header() {
           {/* Menu panel from top */}
           <div className="relative mx-4 mt-[72px] bg-surface-container-lowest rounded-2xl soft-shadow border border-outline-variant/10 overflow-hidden animate-fadeIn">
             <nav className="py-2">
-              {NAV_ITEMS.map((item) => (
+              {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -289,6 +435,18 @@ export default function Header() {
             </nav>
           </div>
         </div>
+      )}
+
+      {/* Notification Modal */}
+      {selectedNotificationId && (
+        <NotificationModal
+          confessionId={selectedNotificationId}
+          isOpen={notificationModalOpen}
+          onClose={() => {
+            setNotificationModalOpen(false);
+            setSelectedNotificationId(null);
+          }}
+        />
       )}
     </>
   );

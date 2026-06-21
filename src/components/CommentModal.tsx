@@ -11,6 +11,13 @@ interface Comment {
   user_id: string | null;
 }
 
+interface HrReply {
+  id: string;
+  content: string;
+  admin_id: string | null;
+  created_at: string;
+}
+
 interface CommentModalProps {
   confession: WallCardData;
   isOpen: boolean;
@@ -41,6 +48,15 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // HR reply
+  const [hrReplies, setHrReplies] = useState<HrReply[]>([]);
+  const [hrLoading, setHrLoading] = useState(false);
+
+  // Deleting comment loading state
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -86,7 +102,6 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
     if (!contentEl) return;
 
     const handleTouchMove = (e: TouchEvent) => {
-      // Only prevent default if scrolling within the content area
       if (contentEl.scrollTop > 0 && contentEl.scrollTop < contentEl.scrollHeight - contentEl.clientHeight) {
         return;
       }
@@ -96,29 +111,63 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
     return () => document.removeEventListener("touchmove", handleTouchMove);
   }, [isOpen, isMobile]);
 
+  // Check admin status
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+    fetch("/api/auth/check-admin")
+      .then((res) => res.json())
+      .then((data: { isAdmin: boolean }) => setIsAdmin(data.isAdmin))
+      .catch(() => setIsAdmin(false));
+  }, [user]);
+
+  // Fetch comments
   useEffect(() => {
     if (!isOpen) return;
 
     let ignore = false;
-    fetch(`/api/confessions/${confession.id}/comments`)
-      .then((res) => res.json())
-      .then((result) => {
+
+    const fetchData = async () => {
+      // Fetch comments
+      try {
+        const res = await fetch(`/api/confessions/${confession.id}/comments`);
+        const result = await res.json();
         if (!ignore) {
           setComments(result.data || []);
           setLoading(false);
         }
-      })
-      .catch(() => {
+      } catch {
         if (!ignore) {
           setError("Gagal memuat komentar");
           setLoading(false);
         }
-      });
+      }
+
+      // Fetch HR replies (only if logged in - owner or admin)
+      if (user) {
+        setHrLoading(true);
+        try {
+          const res = await fetch(`/api/confessions/${confession.id}/hr-reply`);
+          const result = await res.json();
+          if (!ignore && result.data) {
+            setHrReplies(result.data);
+          }
+        } catch {
+          // Ignore
+        } finally {
+          if (!ignore) setHrLoading(false);
+        }
+      }
+    };
+
+    fetchData();
 
     return () => {
       ignore = true;
     };
-  }, [isOpen, confession.id]);
+  }, [isOpen, confession.id, user]);
 
   useEffect(() => {
     if (bottomRef.current) {
@@ -155,6 +204,24 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
       setError("Gagal terhubung ke server");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!confirm("Hapus komentar ini?")) return;
+
+    setDeletingCommentId(commentId);
+    try {
+      const res = await fetch(`/api/comments/${commentId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setComments((prev) => prev.filter((c) => c.id !== commentId));
+      }
+    } catch {
+      // Ignore
+    } finally {
+      setDeletingCommentId(null);
     }
   };
 
@@ -209,6 +276,26 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
                 </p>
               </div>
 
+              {/* HR Reply section (only for confession owner or admin) */}
+              {user && hrReplies.length > 0 && (
+                <div className="bg-primary-container/10 rounded-2xl p-4 border border-primary/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="material-symbols-outlined text-sm text-primary">support_agent</span>
+                    <span className="text-xs font-bold text-primary">HR</span>
+                  </div>
+                  {hrReplies.map((reply) => (
+                    <div key={reply.id} className="mb-2 last:mb-0">
+                      <p className="text-on-surface font-body-md text-sm whitespace-pre-line">
+                        {reply.content}
+                      </p>
+                      <span className="text-[10px] text-on-surface-variant/40 mt-1 block">
+                        {getTimeAgo(reply.created_at)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Loading state */}
               {loading && (
                 <div className="text-center py-8">
@@ -260,15 +347,32 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
                   key={comment.id}
                   className="bg-surface-container-low rounded-xl p-4"
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center">
-                      <span className="text-[10px] text-primary font-bold">
-                        {comment.user_id ? "U" : "A"}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center">
+                        <span className="text-[10px] text-primary font-bold">
+                          {comment.user_id ? "U" : "A"}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-on-surface-variant/60">
+                        {comment.user_id ? "User" : "Anonim"} &middot; {getTimeAgo(comment.created_at)}
                       </span>
                     </div>
-                    <span className="text-[11px] text-on-surface-variant/60">
-                      {comment.user_id ? "User" : "Anonim"} &middot; {getTimeAgo(comment.created_at)}
-                    </span>
+                    {/* Admin delete button */}
+                    {isAdmin && (
+                      <button
+                        onClick={() => handleDeleteComment(comment.id)}
+                        disabled={deletingCommentId === comment.id}
+                        className="p-1 rounded-full text-error hover:bg-error-container/20 transition-colors disabled:opacity-30"
+                        title="Hapus komentar"
+                      >
+                        {deletingCommentId === comment.id ? (
+                          <span className="w-3 h-3 border-2 border-error/30 border-t-error rounded-full animate-spin block" />
+                        ) : (
+                          <span className="material-symbols-outlined text-sm">delete</span>
+                        )}
+                      </button>
+                    )}
                   </div>
                   <p className="text-on-surface font-body-md text-sm whitespace-pre-line">
                     {comment.content}
@@ -362,6 +466,26 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
             </p>
           </div>
 
+          {/* HR Reply section (only for confession owner or admin) */}
+          {user && hrReplies.length > 0 && (
+            <div className="bg-primary-container/10 rounded-2xl p-4 md:p-6 border border-primary/20">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="material-symbols-outlined text-sm text-primary">support_agent</span>
+                <span className="text-xs font-bold text-primary">Balasan HR</span>
+              </div>
+              {hrReplies.map((reply) => (
+                <div key={reply.id} className="mb-3 last:mb-0">
+                  <p className="text-on-surface font-body-md whitespace-pre-line">
+                    {reply.content}
+                  </p>
+                  <span className="text-[11px] text-on-surface-variant/40 mt-1 block">
+                    {getTimeAgo(reply.created_at)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Loading state */}
           {loading && (
             <div className="text-center py-8">
@@ -413,15 +537,32 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
               key={comment.id}
               className="bg-surface-container-low rounded-xl p-4"
             >
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center">
-                  <span className="text-[10px] text-primary font-bold">
-                    {comment.user_id ? "U" : "A"}
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center">
+                    <span className="text-[10px] text-primary font-bold">
+                      {comment.user_id ? "U" : "A"}
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-on-surface-variant/60">
+                    {comment.user_id ? "User" : "Anonim"} &middot; {getTimeAgo(comment.created_at)}
                   </span>
                 </div>
-                <span className="text-[11px] text-on-surface-variant/60">
-                  {comment.user_id ? "User" : "Anonim"} &middot; {getTimeAgo(comment.created_at)}
-                </span>
+                {/* Admin delete button */}
+                {isAdmin && (
+                  <button
+                    onClick={() => handleDeleteComment(comment.id)}
+                    disabled={deletingCommentId === comment.id}
+                    className="p-1 rounded-full text-error hover:bg-error-container/20 transition-colors disabled:opacity-30"
+                    title="Hapus komentar"
+                  >
+                    {deletingCommentId === comment.id ? (
+                      <span className="w-3 h-3 border-2 border-error/30 border-t-error rounded-full animate-spin block" />
+                    ) : (
+                      <span className="material-symbols-outlined text-sm">delete</span>
+                    )}
+                  </button>
+                )}
               </div>
               <p className="text-on-surface font-body-md text-sm whitespace-pre-line">
                 {comment.content}

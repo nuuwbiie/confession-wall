@@ -23,12 +23,16 @@ function getAnonClient() {
 // GET /api/confessions - Fetch confessions
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const status = searchParams.get("status") || "published";
+  const statusParam = searchParams.get("status") || "published";
   const limit = parseInt(searchParams.get("limit") || "50");
   const offset = parseInt(searchParams.get("offset") || "0");
 
-  // Use admin client for pending reads (bypass RLS), anon for published
-  const supabase = status === "pending" ? getAdminClient() : getAnonClient();
+  // Support comma-separated statuses, e.g. "published,rejected"
+  const statuses = statusParam.split(",").filter(Boolean);
+
+  // Use admin client for non-public reads (bypass RLS)
+  const needsAdmin = statuses.some((s) => s !== "published");
+  const supabase = needsAdmin ? getAdminClient() : getAnonClient();
 
   let query = supabase
     .from("confessions")
@@ -37,10 +41,10 @@ export async function GET(request: Request) {
       { count: "exact" }
     );
 
-  if (status === "pending") {
-    query = query.eq("status", "pending");
+  if (statuses.length === 1) {
+    query = query.eq("status", statuses[0]);
   } else {
-    query = query.eq("status", "published");
+    query = query.in("status", statuses);
   }
 
   const { data, error, count } = await query
