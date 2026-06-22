@@ -12,6 +12,11 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss)](https://tailwindcss.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)](https://www.typescriptlang.org/)
 
+**🌐 Bahasa Lain / Other Languages:**
+[![EN](https://img.shields.io/badge/🇺🇸-English-blue)](./README.md)
+[![ID](https://img.shields.io/badge/🇮🇩-Indonesia-red)](./README.id.md)
+[![ZH](https://img.shields.io/badge/🇨🇳-简体中文-green)](./README.zh-CN.md)
+
 [🚀 Quick Start](#-quick-start) · [✨ Features](#-features) · [📡 API](#-api-reference) · [🤝 Contributing](./CONTRIBUTING.md) · [📄 License](#-license)
 
 </div>
