@@ -311,26 +311,8 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
                 </div>
               )}
 
-              {/* Login gate */}
-              {!user && !loading && (
-                <div className="text-center py-6 px-4 bg-primary-container/10 rounded-2xl border border-dashed border-primary-container/30">
-                  <span className="material-symbols-outlined text-2xl text-primary mb-2">
-                    lock
-                  </span>
-                  <p className="text-sm text-on-surface-variant mb-3">
-                    Login untuk melihat dan memberikan komentar
-                  </p>
-                  <button
-                    onClick={onRequireLogin}
-                    className="bg-primary text-on-primary px-5 py-2 rounded-full font-label-sm text-label-sm font-bold hover:opacity-90 transition-all"
-                  >
-                    Login
-                  </button>
-                </div>
-              )}
-
               {/* Empty state */}
-              {!loading && !error && user && comments.length === 0 && (
+              {!loading && !error && comments.length === 0 && (
                 <div className="text-center py-8">
                   <span className="material-symbols-outlined text-3xl text-outline-variant mb-2">
                     chat_bubble_outline
@@ -342,7 +324,7 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
               )}
 
               {/* Comments list */}
-              {!loading && user && comments.map((comment) => (
+              {!loading && comments.map((comment) => (
                 <div
                   key={comment.id}
                   className="bg-surface-container-low rounded-xl p-4"
@@ -501,26 +483,8 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
             </div>
           )}
 
-          {/* Login gate */}
-          {!user && !loading && (
-            <div className="text-center py-6 px-4 bg-primary-container/10 rounded-2xl border border-dashed border-primary-container/30">
-              <span className="material-symbols-outlined text-2xl text-primary mb-2">
-                lock
-              </span>
-              <p className="text-sm text-on-surface-variant mb-3">
-                Login untuk melihat dan memberikan komentar
-              </p>
-              <button
-                onClick={onRequireLogin}
-                className="bg-primary text-on-primary px-5 py-2 rounded-full font-label-sm text-label-sm font-bold hover:opacity-90 transition-all"
-              >
-                Login
-              </button>
-            </div>
-          )}
-
           {/* Empty state */}
-          {!loading && !error && user && comments.length === 0 && (
+          {!loading && !error && comments.length === 0 && (
             <div className="text-center py-8">
               <span className="material-symbols-outlined text-3xl text-outline-variant mb-2">
                 chat_bubble_outline
@@ -532,7 +496,7 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
           )}
 
           {/* Comments list */}
-          {!loading && user && comments.map((comment) => (
+          {!loading && comments.map((comment) => (
             <div
               key={comment.id}
               className="bg-surface-container-low rounded-xl p-4"
