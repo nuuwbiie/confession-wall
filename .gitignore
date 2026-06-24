@@ -31,7 +31,18 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+.env.local
+.env.*.local
+
+# reasonix local workspace state
+.reasonix/
+
+# unused create-next-app boilerplate
+public/next.svg
+public/vercel.svg
+public/globe.svg
+public/window.svg
+public/file.svg
 
 # vercel
 .vercel

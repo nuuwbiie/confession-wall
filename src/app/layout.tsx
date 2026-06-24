@@ -46,9 +46,6 @@ export const metadata: Metadata = {
   title: "Confession Wall - A digital exhale for your emotions",
   description:
     "A safe space for anonymous confessions, sharing stories, and finding emotional wellness.",
-  icons: {
-    icon: "/favicon.svg",
-  },
 };
 
 export default function RootLayout({
