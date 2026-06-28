@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { FONT_OPTIONS, CONFESSION_MAX_CHARS } from "@/lib/constants";
 import { useConfessionForm } from "@/hooks/useConfessionForm";
 import ConfessionPreview from "./ConfessionPreview";
+import SuccessModal from "./SuccessModal";
 
 export default function ConfessionForm() {
   const {
@@ -18,6 +20,8 @@ export default function ConfessionForm() {
   } = useConfessionForm();
 
   const selectedFontOption = FONT_OPTIONS.find((f) => f.id === state.font);
+
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +52,7 @@ export default function ConfessionForm() {
 
       dispatch({ type: "SET_STATUS", payload: "success" });
       clearDraft();
+      setShowSuccessModal(true);
     } catch {
       dispatch({
         type: "SET_ERROR",
@@ -56,12 +61,10 @@ export default function ConfessionForm() {
     }
   };
 
-  // Reset success state after 3 seconds
-  if (state.status === "success") {
-    setTimeout(() => {
-      dispatch({ type: "SET_STATUS", payload: "idle" });
-    }, 3000);
-  }
+  const handleCloseSuccess = () => {
+    setShowSuccessModal(false);
+    dispatch({ type: "SET_STATUS", payload: "idle" });
+  };
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -335,6 +338,9 @@ export default function ConfessionForm() {
           />
         </div>
       )}
+
+      {/* Success Modal */}
+      <SuccessModal isOpen={showSuccessModal} onClose={handleCloseSuccess} />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { moderateContent } from "@/lib/gemini-moderation";
 import { containsProfanity } from "@/lib/profanity-filter";
 
 // Create admin client with service_role key (bypasses RLS)
@@ -111,9 +112,29 @@ export async function POST(request: Request) {
     if (content.length > 2000) {
       return NextResponse.json({ error: "Content must be less than 2000 characters" }, { status: 400 });
     }
-    if (containsProfanity(content)) {
+    // Moderasi konten menggunakan AI Gemini
+    // Fallback ke filter lokal jika Gemini gagal (quota exhausted, dll)
+    let moderationPassed = true;
+    let moderationError = "";
+
+    try {
+      const moderationResult = await moderateContent(content);
+      if (moderationResult.is_flagged) {
+        moderationPassed = false;
+        moderationError = `Maaf, cerita Anda tidak dapat dikirim karena mengandung konten yang tidak pantas: ${moderationResult.reason || "Teks tidak sesuai pedoman"}. Silakan edit dan coba lagi.`;
+      }
+    } catch (modError) {
+      // Gemini gagal (quota exhausted / network error) → fallback ke filter lokal
+      console.warn("Gemini moderation unavailable, falling back to local filter:", modError);
+      if (containsProfanity(content)) {
+        moderationPassed = false;
+        moderationError = "Maaf, cerita Anda mengandung kata-kata yang tidak pantas. Silakan edit dan coba lagi.";
+      }
+    }
+
+    if (!moderationPassed) {
       return NextResponse.json(
-        { error: "Maaf, cerita Anda mengandung kata-kata yang tidak pantas. Silakan edit dan coba lagi." },
+        { error: moderationError },
         { status: 400 }
       );
     }
