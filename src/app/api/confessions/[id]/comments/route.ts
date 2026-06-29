@@ -5,7 +5,6 @@ import { cookies } from "next/headers";
 import { moderateContent } from "@/lib/gemini-moderation";
 import { containsProfanity } from "@/lib/profanity-filter";
 import { checkRateLimit, getClientIp, rateLimitErrorResponse } from "@/lib/rate-limiter";
-import { verifyTurnstileToken } from "@/lib/turnstile-verify";
 
 function getAdminClient() {
   return createClient(
@@ -95,7 +94,7 @@ export async function POST(
   }
 
   const body = await request.json();
-  const { content, turnstileToken } = body;
+  const { content } = body;
 
   if (!content || typeof content !== "string" || content.trim().length === 0) {
     return NextResponse.json({ error: "Content is required" }, { status: 400 });
@@ -103,15 +102,6 @@ export async function POST(
 
   if (content.trim().length > 500) {
     return NextResponse.json({ error: "Comment too long (max 500 characters)" }, { status: 400 });
-  }
-
-  // Turnstile verification
-  const turnstileResult = await verifyTurnstileToken(turnstileToken);
-  if (!turnstileResult.success) {
-    return NextResponse.json(
-      { error: turnstileResult.error || "Verifikasi keamanan gagal" },
-      { status: 400 }
-    );
   }
 
   // Moderasi konten menggunakan AI Gemini

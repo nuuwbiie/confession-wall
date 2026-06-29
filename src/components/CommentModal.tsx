@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import type { WallCardData } from "./WallCard";
 import LoginModal from "./LoginModal";
 import Toast from "./Toast";
-import TurnstileWidget from "./TurnstileWidget";
 
 interface Comment {
   id: string;
@@ -63,7 +62,6 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
   const [toastVisible, setToastVisible] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -200,7 +198,6 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: newComment.trim(),
-          turnstileToken,
         }),
       });
       const result = await res.json();
@@ -404,7 +401,7 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
                   />
                   <button
                     type="submit"
-                    disabled={!newComment.trim() || submitting || !turnstileToken}
+                    disabled={!newComment.trim() || submitting}
                     className="bg-primary text-on-primary px-4 py-2.5 rounded-full font-label-sm text-label-sm font-bold hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
                   >
                     {submitting ? (
@@ -413,13 +410,6 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
                       <span className="material-symbols-outlined text-sm">send</span>
                     )}
                   </button>
-                </div>
-                <div className="flex justify-center">
-                  <TurnstileWidget
-                    onVerify={(token) => setTurnstileToken(token)}
-                    onExpire={() => setTurnstileToken(null)}
-                    onError={() => setTurnstileToken(null)}
-                  />
                 </div>
               </form>
             ) : (
@@ -582,27 +572,18 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
             className="border-t border-outline-variant/10 px-4 md:px-6 py-3 md:py-4 shrink-0"
           >
             <div className="flex gap-2 md:gap-3 items-start">
-              <div className="flex-1 space-y-2">
-                <input
-                  type="text"
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Tulis komentar..."
-                  maxLength={500}
-                  className="w-full bg-surface-container-low border border-outline-variant/30 rounded-full px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/30 outline-none transition-all"
-                  disabled={submitting}
-                />
-                <div className="flex justify-center">
-                  <TurnstileWidget
-                    onVerify={(token) => setTurnstileToken(token)}
-                    onExpire={() => setTurnstileToken(null)}
-                    onError={() => setTurnstileToken(null)}
-                  />
-                </div>
-              </div>
+              <input
+                type="text"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Tulis komentar..."
+                maxLength={500}
+                className="flex-1 bg-surface-container-low border border-outline-variant/30 rounded-full px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/30 outline-none transition-all"
+                disabled={submitting}
+              />
               <button
                 type="submit"
-                disabled={!newComment.trim() || submitting || !turnstileToken}
+                disabled={!newComment.trim() || submitting}
                 className="bg-primary text-on-primary px-4 md:px-5 py-2.5 rounded-full font-label-sm text-label-sm font-bold hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 shrink-0"
               >
               {submitting ? (

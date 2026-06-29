@@ -5,7 +5,7 @@ export const RATE_LIMITS = {
   login: { max: 5, windowSeconds: 60 },           // 5 login attempts per minute
   register: { max: 3, windowSeconds: 60 },         // 3 registration attempts per minute
   create_confession: { max: 2, windowSeconds: 60 }, // 2 confessions per minute
-  create_comment: { max: 10, windowSeconds: 60 },  // 10 comments per minute
+  create_comment: { max: 5, windowSeconds: 60 },  // 5 comments per minute
   like: { max: 15, windowSeconds: 60 },            // 15 likes per minute
 } as const;
 
