@@ -4,6 +4,8 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { moderateContent } from "@/lib/gemini-moderation";
 import { containsProfanity } from "@/lib/profanity-filter";
+import { checkRateLimit, getClientIp, rateLimitErrorResponse } from "@/lib/rate-limiter";
+import { verifyTurnstileToken } from "@/lib/turnstile-verify";
 
 // Create admin client with service_role key (bypasses RLS)
 function getAdminClient() {
@@ -98,10 +100,33 @@ export async function GET(request: Request) {
 // POST /api/confessions - Submit a new confession (bypasses RLS)
 export async function POST(request: Request) {
   try {
+    // Rate limiting
+    const ip = getClientIp(request);
+    const rateLimitResult = await checkRateLimit(ip, "create_confession");
+    if (!rateLimitResult.allowed) {
+      return rateLimitErrorResponse(rateLimitResult.retryAfter);
+    }
+
     const supabase = getAdminClient();
     const body = await request.json();
 
-    const { content, font, is_public, allow_replies, is_anonymous } = body;
+    const { content, font, is_public, allow_replies, is_anonymous, honeypot, turnstileToken } = body;
+
+    // Honeypot check: if this field is filled, it's a bot
+    if (honeypot) {
+      console.warn(`Honeypot triggered from IP ${ip} — silently rejecting`);
+      // Return fake success to not tip off the bot
+      return NextResponse.json({ data: { id: "fake" }, success: true }, { status: 201 });
+    }
+
+    // Turnstile verification
+    const turnstileResult = await verifyTurnstileToken(turnstileToken);
+    if (!turnstileResult.success) {
+      return NextResponse.json(
+        { error: turnstileResult.error || "Verifikasi keamanan gagal" },
+        { status: 400 }
+      );
+    }
 
     if (!content || typeof content !== "string") {
       return NextResponse.json({ error: "Content is required" }, { status: 400 });

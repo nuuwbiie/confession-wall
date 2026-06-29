@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
+import { checkRateLimit, getClientIp, rateLimitErrorResponse } from "@/lib/rate-limiter";
 
 function getAdminClient() {
   return createClient(
@@ -66,6 +67,13 @@ export async function POST(
 ) {
   const { id } = await params;
   const adminClient = getAdminClient();
+
+  // Rate limiting
+  const ip = getClientIp(request);
+  const rateLimitResult = await checkRateLimit(ip, "like");
+  if (!rateLimitResult.allowed) {
+    return rateLimitErrorResponse(rateLimitResult.retryAfter);
+  }
 
   // Detect authenticated user from cookie
   let userId: string | null = null;

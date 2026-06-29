@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { WallCardData } from "./WallCard";
 import LoginModal from "./LoginModal";
+import Toast from "./Toast";
+import TurnstileWidget from "./TurnstileWidget";
 
 interface Comment {
   id: string;
@@ -56,6 +58,12 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
 
   // Deleting comment loading state
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
+
+  // Toast state
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("success");
+  const [toastVisible, setToastVisible] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -190,15 +198,29 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
       const res = await fetch(`/api/confessions/${confession.id}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: newComment.trim() }),
+        body: JSON.stringify({
+          content: newComment.trim(),
+          turnstileToken,
+        }),
       });
       const result = await res.json();
 
       if (!res.ok) {
-        setError(result.error || "Gagal mengirim komentar");
+        if (result.flagged) {
+          // Moderation rejection → toast error
+          setToastMessage(result.error || "Komentar ditolak.");
+          setToastType("error");
+          setToastVisible(true);
+        } else {
+          setError(result.error || "Gagal mengirim komentar");
+        }
       } else {
         setComments((prev) => [...prev, result.data]);
         setNewComment("");
+        // Success → toast
+        setToastMessage("Komentar berhasil dikirim!");
+        setToastType("success");
+        setToastVisible(true);
       }
     } catch {
       setError("Gagal terhubung ke server");
@@ -368,28 +390,37 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
             {user ? (
               <form
                 onSubmit={handleSubmit}
-                className="border-t border-outline-variant/10 px-5 py-3 flex gap-2"
+                className="border-t border-outline-variant/10 px-5 py-3 space-y-2"
               >
-                <input
-                  type="text"
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Tulis komentar..."
-                  maxLength={500}
-                  className="flex-1 bg-surface-container-low border border-outline-variant/30 rounded-full px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/30 outline-none transition-all"
-                  disabled={submitting}
-                />
-                <button
-                  type="submit"
-                  disabled={!newComment.trim() || submitting}
-                  className="bg-primary text-on-primary px-4 py-2.5 rounded-full font-label-sm text-label-sm font-bold hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
-                >
-                  {submitting ? (
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <span className="material-symbols-outlined text-sm">send</span>
-                  )}
-                </button>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Tulis komentar..."
+                    maxLength={500}
+                    className="flex-1 bg-surface-container-low border border-outline-variant/30 rounded-full px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/30 outline-none transition-all"
+                    disabled={submitting}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!newComment.trim() || submitting || !turnstileToken}
+                    className="bg-primary text-on-primary px-4 py-2.5 rounded-full font-label-sm text-label-sm font-bold hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+                  >
+                    {submitting ? (
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <span className="material-symbols-outlined text-sm">send</span>
+                    )}
+                  </button>
+                </div>
+                <div className="flex justify-center">
+                  <TurnstileWidget
+                    onVerify={(token) => setTurnstileToken(token)}
+                    onExpire={() => setTurnstileToken(null)}
+                    onError={() => setTurnstileToken(null)}
+                  />
+                </div>
               </form>
             ) : (
               <div className="border-t border-outline-variant/10 px-5 py-3">
@@ -403,6 +434,14 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
             )}
           </div>
         </div>
+
+        {/* Toast notification */}
+        <Toast
+          message={toastMessage}
+          type={toastType}
+          isVisible={toastVisible}
+          onClose={() => setToastVisible(false)}
+        />
       </div>
     );
   }
@@ -540,22 +579,32 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
         {user ? (
           <form
             onSubmit={handleSubmit}
-            className="border-t border-outline-variant/10 px-4 md:px-6 py-3 md:py-4 flex gap-2 md:gap-3 shrink-0"
+            className="border-t border-outline-variant/10 px-4 md:px-6 py-3 md:py-4 shrink-0"
           >
-            <input
-              type="text"
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Tulis komentar..."
-              maxLength={500}
-              className="flex-1 bg-surface-container-low border border-outline-variant/30 rounded-full px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/30 outline-none transition-all"
-              disabled={submitting}
-            />
-            <button
-              type="submit"
-              disabled={!newComment.trim() || submitting}
-              className="bg-primary text-on-primary px-4 md:px-5 py-2.5 rounded-full font-label-sm text-label-sm font-bold hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
-            >
+            <div className="flex gap-2 md:gap-3 items-start">
+              <div className="flex-1 space-y-2">
+                <input
+                  type="text"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Tulis komentar..."
+                  maxLength={500}
+                  className="w-full bg-surface-container-low border border-outline-variant/30 rounded-full px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/30 outline-none transition-all"
+                  disabled={submitting}
+                />
+                <div className="flex justify-center">
+                  <TurnstileWidget
+                    onVerify={(token) => setTurnstileToken(token)}
+                    onExpire={() => setTurnstileToken(null)}
+                    onError={() => setTurnstileToken(null)}
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={!newComment.trim() || submitting || !turnstileToken}
+                className="bg-primary text-on-primary px-4 md:px-5 py-2.5 rounded-full font-label-sm text-label-sm font-bold hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 shrink-0"
+              >
               {submitting ? (
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
@@ -563,6 +612,7 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
               )}
               <span className="hidden md:inline">Kirim</span>
             </button>
+            </div>
           </form>
         ) : (
           <div className="border-t border-outline-variant/10 px-4 md:px-6 py-3 shrink-0">
@@ -575,6 +625,14 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
           </div>
         )}
       </div>
+
+      {/* Toast notification */}
+      <Toast
+        message={toastMessage}
+        type={toastType}
+        isVisible={toastVisible}
+        onClose={() => setToastVisible(false)}
+      />
     </div>
   );
 }

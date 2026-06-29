@@ -5,6 +5,7 @@ import { FONT_OPTIONS, CONFESSION_MAX_CHARS } from "@/lib/constants";
 import { useConfessionForm } from "@/hooks/useConfessionForm";
 import ConfessionPreview from "./ConfessionPreview";
 import SuccessModal from "./SuccessModal";
+import TurnstileWidget from "./TurnstileWidget";
 
 export default function ConfessionForm() {
   const {
@@ -22,12 +23,17 @@ export default function ConfessionForm() {
   const selectedFontOption = FONT_OPTIONS.find((f) => f.id === state.font);
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     dispatch({ type: "SET_STATUS", payload: "submitting" });
 
     try {
+      const form = e.target as HTMLFormElement;
+      const formData = new FormData(form);
+      const honeypot = formData.get("website") as string;
+
       const res = await fetch("/api/confessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -37,6 +43,8 @@ export default function ConfessionForm() {
             is_public: state.isPublic,
             allow_replies: state.allowReplies,
             is_anonymous: state.isAnonymous,
+            honeypot, // send honeypot field for server-side check
+            turnstileToken, // send Turnstile token for server-side verification
           }),
       });
 
@@ -78,6 +86,27 @@ export default function ConfessionForm() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Honeypot field — hidden from humans, bots will fill it */}
+          <div className="absolute left-[-9999px]" aria-hidden="true">
+            <label htmlFor="website">Website</label>
+            <input
+              id="website"
+              name="website"
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+            />
+          </div>
+
+          {/* Turnstile widget */}
+          <div className="flex justify-center">
+            <TurnstileWidget
+              onVerify={(token) => setTurnstileToken(token)}
+              onExpire={() => setTurnstileToken(null)}
+              onError={() => setTurnstileToken(null)}
+            />
+          </div>
+
           {/* Font Picker */}
           <div>
             <label className="font-label-sm text-label-sm text-on-surface-variant mb-3 block">

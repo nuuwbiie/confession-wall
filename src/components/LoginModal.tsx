@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { generateUsername } from "@/lib/username-generator";
 import { usernameToEmail, validateUsername } from "@/lib/auth-helpers";
+import TurnstileWidget from "./TurnstileWidget";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export default function LoginModal({ isOpen, onClose, onSkip, onSuccess }: Login
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [benefitsExpanded, setBenefitsExpanded] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -44,6 +46,16 @@ export default function LoginModal({ isOpen, onClose, onSkip, onSuccess }: Login
     setError(null);
     setSuccessMessage(null);
 
+    // Honeypot check: if this hidden field is filled, it's a bot
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const honeypot = formData.get("website") as string;
+    if (honeypot) {
+      // Bot detected — silently reject without telling the bot
+      setLoading(false);
+      return;
+    }
+
     // Validate username
     const validation = validateUsername(username);
     if (!validation.valid) {
@@ -52,10 +64,54 @@ export default function LoginModal({ isOpen, onClose, onSkip, onSuccess }: Login
     }
     setUsernameError(null);
 
+    // Check rate limit
+    try {
+      const rlRes = await fetch("/api/check-rate-limit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          endpoint: isRegister ? "register" : "login",
+        }),
+      });
+
+      if (!rlRes.ok) {
+        const rlErr = await rlRes.json();
+        setError(rlErr.error || "Terlalu banyak percobaan. Silakan tunggu beberapa saat.");
+        setLoading(false);
+        return;
+      }
+    } catch {
+      // Fail open on network error
+    }
+
+    // Verify Turnstile token
+    if (!turnstileToken) {
+      setError("Verifikasi keamanan diperlukan. Silakan centang kotak verifikasi.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const verifyRes = await fetch("/api/verify-turnstile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: turnstileToken }),
+      });
+
+      if (!verifyRes.ok) {
+        const verifyErr = await verifyRes.json();
+        setError(verifyErr.error || "Verifikasi keamanan gagal. Silakan coba lagi.");
+        setLoading(false);
+        return;
+      }
+    } catch {
+      setError("Gagal memverifikasi keamanan. Silakan coba lagi.");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
-    const form = e.currentTarget;
-    const formData = new FormData(form);
     const password = formData.get("password") as string;
     const email = usernameToEmail(validation.normalized);
 
@@ -183,6 +239,26 @@ export default function LoginModal({ isOpen, onClose, onSkip, onSuccess }: Login
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Honeypot field — hidden from humans, bots will fill it */}
+            <div className="absolute left-[-9999px]" aria-hidden="true">
+              <label htmlFor="website">Website</label>
+              <input
+                id="website"
+                name="website"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+              />
+            </div>
+
+            {/* Turnstile widget */}
+            <div className="flex justify-center">
+              <TurnstileWidget
+                onVerify={(token) => setTurnstileToken(token)}
+                onExpire={() => setTurnstileToken(null)}
+                onError={() => setTurnstileToken(null)}
+              />
+            </div>
             {/* Username */}
             <div>
               <label className="font-label-sm text-label-sm text-on-surface-variant mb-2 block">
@@ -279,6 +355,7 @@ export default function LoginModal({ isOpen, onClose, onSkip, onSuccess }: Login
                   setIsRegister(!isRegister);
                   setError(null);
                   setSuccessMessage(null);
+                  setTurnstileToken(null);
                 }}
                 className="text-primary font-medium hover:underline"
               >
