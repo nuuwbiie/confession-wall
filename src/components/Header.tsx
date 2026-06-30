@@ -7,6 +7,8 @@ import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { useAuth } from "./AuthProvider";
 import NotificationModal from "./NotificationModal";
+import { useNotificationPermission } from "@/hooks/useNotificationPermission";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 interface UserConfession {
   id: string;
@@ -60,6 +62,9 @@ export default function Header() {
   // Notification modal state
   const [selectedNotificationId, setSelectedNotificationId] = useState<string | null>(null);
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
+
+  const { permission, requestPermission, isSupported } = useNotificationPermission();
+  const { swReady, isSubscribed, subscribe, unsubscribe: unsubscribePush } = usePushNotifications();
 
   const navItems = getNavItems(isAdmin);
 
@@ -122,6 +127,13 @@ export default function Header() {
       });
   }, [user]);
 
+  // Auto-subscribe to push notifications when permission is granted
+  useEffect(() => {
+    if (permission === "granted" && swReady && !isSubscribed) {
+      subscribe();
+    }
+  }, [permission, swReady, isSubscribed, subscribe]);
+
   const fetchUserConfessions = async () => {
     setUserConfessionsLoading(true);
     try {
@@ -146,18 +158,45 @@ export default function Header() {
   const handleSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
+    await unsubscribePush();
     setUsername(null);
     setAvatarDropdownOpen(false);
     router.refresh();
   };
+
+  // Track notifications already shown as browser notifications
+  const shownNotifIds = useRef<Set<string>>(new Set());
 
   const fetchNotifications = async () => {
     setNotificationsLoading(true);
     try {
       const res = await fetch("/api/notifications?limit=20");
       const result = await res.json();
-      setNotifications(result.data || []);
+      const data: Notification[] = result.data || [];
+      setNotifications(data);
       setUnreadCount(result.unreadCount || 0);
+
+      // Fire browser notification for new unread notifications (if permitted)
+      if (permission === "granted" && data.length > 0) {
+        const unseenUnread = data.filter(
+          (n) => !n.is_read && !shownNotifIds.current.has(n.id)
+        );
+        if (unseenUnread.length > 0) {
+          // Mark all as shown
+          unseenUnread.forEach((n) => shownNotifIds.current.add(n.id));
+
+          if (unseenUnread.length === 1) {
+            const n = unseenUnread[0];
+            new Notification("Confession Wall", {
+              body: n.content,
+            });
+          } else {
+            new Notification("Confession Wall", {
+              body: `${unseenUnread.length} notifikasi baru`,
+            });
+          }
+        }
+      }
     } catch {
       setNotifications([]);
     } finally {
@@ -261,7 +300,46 @@ export default function Header() {
                           Notifikasi
                         </p>
                       </div>
-                      <div className="max-h-64 overflow-y-auto">
+                      <div className="max-h-80 overflow-y-auto">
+                        {/* Notification permission banner */}
+                        {isSupported && (permission === "default" || permission === "denied") && (
+                          <div
+                            className={`mx-4 mt-3 mb-2 px-4 py-3 rounded-xl text-xs border ${
+                              permission === "denied"
+                                ? "bg-error-container/20 border-error/20 text-on-error-container"
+                                : "bg-primary-container/20 border-primary/20 text-primary"
+                            }`}
+                          >
+                            <div className="flex items-start gap-2">
+                              <span className="material-symbols-outlined text-sm shrink-0 mt-0.5">
+                                {permission === "denied" ? "notifications_off" : "notifications_active"}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                {permission === "denied" ? (
+                                  <p className="text-on-surface-variant">
+                                    Notifikasi diblokir. Ubah izin melalui pengaturan browser.
+                                  </p>
+                                ) : (
+                                  <>
+                                    <p className="mb-2">
+                                      Aktifkan notifikasi agar tidak ketinggalan balasan HR.
+                                    </p>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        requestPermission();
+                                      }}
+                                      className="px-3 py-1.5 rounded-full bg-primary text-on-primary text-[11px] font-bold hover:opacity-90 transition-all"
+                                    >
+                                      Aktifkan
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         {notificationsLoading ? (
                           <div className="flex justify-center py-6">
                             <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />

@@ -6,6 +6,7 @@ import { moderateContent } from "@/lib/gemini-moderation";
 import { containsProfanity } from "@/lib/profanity-filter";
 import { checkRateLimit, getClientIp, rateLimitErrorResponse } from "@/lib/rate-limiter";
 import { verifyTurnstileToken } from "@/lib/turnstile-verify";
+import { sendPushToUser } from "@/lib/push";
 
 // Create admin client with service_role key (bypasses RLS)
 function getAdminClient() {
@@ -224,10 +225,69 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: retryResult.error.message }, { status: 500 });
         }
 
+        // Notify admins about new confession (retry path)
+        const insertedId = retryResult.data.id;
+        try {
+          const { data: admins } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("is_admin", true);
+          if (admins && admins.length > 0) {
+            await supabase.from("notifications").insert(
+              admins.map((admin: { id: string }) => ({
+                user_id: admin.id,
+                confession_id: insertedId,
+                type: "new_confession",
+                content: "Confession baru menunggu review.",
+              }))
+            );
+            // Send push to all admins
+            for (const admin of admins) {
+              await sendPushToUser(
+                admin.id,
+                "Confession Baru",
+                "Confession baru menunggu review.",
+                "/dashboard"
+              );
+            }
+          }
+        } catch {
+          // Non-critical: don't fail the request
+        }
+
         return NextResponse.json({ data: retryResult.data, success: true }, { status: 201 });
       }
 
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Notify admins about new confession
+    try {
+      const { data: admins } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("is_admin", true);
+      if (admins && admins.length > 0) {
+        await supabase.from("notifications").insert(
+          admins.map((admin: { id: string }) => ({
+            user_id: admin.id,
+            confession_id: data.id,
+            type: "new_confession",
+            content: "Confession baru menunggu review.",
+          }))
+        );
+        // Send push to all admins
+        for (const admin of admins) {
+          await sendPushToUser(
+            admin.id,
+            "Confession Baru",
+            "Confession baru menunggu review.",
+            "/dashboard"
+          );
+        }
+      }
+    } catch {
+      // Non-critical: don't fail the request
     }
 
     return NextResponse.json({ data, success: true }, { status: 201 });

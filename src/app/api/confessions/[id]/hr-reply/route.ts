@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { sendPushToUser } from "@/lib/push";
 
 function getAdminClient() {
   return createClient(
@@ -153,6 +154,14 @@ export async function POST(
       type: "hr_reply",
       content: "HR telah membalas confession Anda. Klik untuk melihat balasan.",
     });
+
+    // Send push notification to confession owner
+    await sendPushToUser(
+      confession.user_id,
+      "Balasan HR",
+      "HR telah membalas confession Anda.",
+      "/"
+    );
   }
 
   return NextResponse.json({ data, success: true }, { status: 201 });
