@@ -131,6 +131,14 @@ export async function POST(
     return NextResponse.json({ error: "Confession not found" }, { status: 404 });
   }
 
+  // Cannot reply to anonymous confessions (user_id is null)
+  if (!confession.user_id) {
+    return NextResponse.json(
+      { error: "Tidak dapat membalas confession dari pengguna anonim" },
+      { status: 400 }
+    );
+  }
+
   // Insert HR reply
   const { data, error } = await supabase
     .from("hr_replies")

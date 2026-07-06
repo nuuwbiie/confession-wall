@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import type { WallCardData } from "./WallCard";
 import LoginModal from "./LoginModal";
 import Toast from "./Toast";
+import Icon from "./Icon";
 
 interface Comment {
   id: string;
@@ -272,7 +273,7 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
               onClick={onClose}
               className="p-2 rounded-full hover:bg-surface-container transition-colors"
             >
-              <span className="material-symbols-outlined text-on-surface-variant">close</span>
+              <Icon name="close" size={24} className="text-on-surface-variant" />
             </button>
           </div>
 
@@ -299,7 +300,7 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
               {user && hrReplies.length > 0 && (
                 <div className="bg-primary-container/10 rounded-2xl p-4 border border-primary/20">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="material-symbols-outlined text-sm text-primary">support_agent</span>
+                    <Icon name="support_agent" size={14} className="text-primary shrink-0" />
                     <span className="text-xs font-bold text-primary">HR</span>
                   </div>
                   {hrReplies.map((reply) => (
@@ -325,7 +326,7 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
               {/* Error state */}
               {error && !loading && (
                 <div className="flex items-center gap-2 p-3 bg-error-container/30 text-on-error-container rounded-xl text-sm">
-                  <span className="material-symbols-outlined text-sm">error</span>
+                  <Icon name="error" size={14} className="shrink-0" />
                   {error}
                 </div>
               )}
@@ -333,9 +334,7 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
               {/* Empty state */}
               {!loading && !error && comments.length === 0 && (
                 <div className="text-center py-8">
-                  <span className="material-symbols-outlined text-3xl text-outline-variant mb-2">
-                    chat_bubble_outline
-                  </span>
+                  <Icon name="chat_bubble" size={24} className="text-outline-variant mb-2" />
                   <p className="text-on-surface-variant/60 font-label-sm text-label-sm">
                     Belum ada komentar. Jadilah yang pertama!
                   </p>
@@ -370,7 +369,7 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
                         {deletingCommentId === comment.id ? (
                           <span className="w-3 h-3 border-2 border-error/30 border-t-error rounded-full animate-spin block" />
                         ) : (
-                          <span className="material-symbols-outlined text-sm">delete</span>
+                          <Icon name="delete" size={14} className="shrink-0" />
                         )}
                       </button>
                     )}
@@ -407,7 +406,7 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
                     {submitting ? (
                       <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
-                      <span className="material-symbols-outlined text-sm">send</span>
+                      <Icon name="send" size={14} className="shrink-0" />
                     )}
                   </button>
                 </div>
@@ -456,7 +455,7 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
             onClick={onClose}
             className="p-2 rounded-full hover:bg-surface-container transition-colors"
           >
-            <span className="material-symbols-outlined text-on-surface-variant">close</span>
+            <Icon name="close" size={24} className="text-on-surface-variant" />
           </button>
         </div>
 
@@ -481,7 +480,7 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
           {user && hrReplies.length > 0 && (
             <div className="bg-primary-container/10 rounded-2xl p-4 md:p-6 border border-primary/20">
               <div className="flex items-center gap-2 mb-3">
-                <span className="material-symbols-outlined text-sm text-primary">support_agent</span>
+                <Icon name="support_agent" size={14} className="text-primary shrink-0" />
                 <span className="text-xs font-bold text-primary">Balasan HR</span>
               </div>
               {hrReplies.map((reply) => (
@@ -507,7 +506,7 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
           {/* Error state */}
           {error && !loading && (
             <div className="flex items-center gap-2 p-3 bg-error-container/30 text-on-error-container rounded-xl text-sm">
-              <span className="material-symbols-outlined text-sm">error</span>
+              <Icon name="error" size={14} className="shrink-0" />
               {error}
             </div>
           )}
@@ -515,9 +514,7 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
           {/* Empty state */}
           {!loading && !error && comments.length === 0 && (
             <div className="text-center py-8">
-              <span className="material-symbols-outlined text-3xl text-outline-variant mb-2">
-                chat_bubble_outline
-              </span>
+              <Icon name="chat_bubble" size={24} className="text-outline-variant mb-2" />
               <p className="text-on-surface-variant/60 font-label-sm text-label-sm">
                 Belum ada komentar. Jadilah yang pertama!
               </p>
@@ -552,7 +549,7 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
                     {deletingCommentId === comment.id ? (
                       <span className="w-3 h-3 border-2 border-error/30 border-t-error rounded-full animate-spin block" />
                     ) : (
-                      <span className="material-symbols-outlined text-sm">delete</span>
+                      <Icon name="delete" size={14} className="shrink-0" />
                     )}
                   </button>
                 )}
@@ -589,7 +586,7 @@ export default function CommentModal({ confession, isOpen, onClose, user, onRequ
               {submitting ? (
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <span className="material-symbols-outlined text-sm">send</span>
+                <Icon name="send" size={14} className="shrink-0" />
               )}
               <span className="hidden md:inline">Kirim</span>
             </button>

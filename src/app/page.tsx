@@ -5,6 +5,7 @@ import WallCard, { type WallCardData } from "@/components/WallCard";
 import MasonryGrid from "@/components/MasonryGrid";
 import CommentModal from "@/components/CommentModal";
 import { SkeletonGrid } from "@/components/SkeletonCard";
+import Icon from "@/components/Icon";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -85,9 +86,7 @@ export default function HomePage() {
         {/* Error State */}
         {error && !loading && (
           <div className="text-center py-20">
-            <span className="material-symbols-outlined text-5xl text-outline-variant mb-4">
-              error_outline
-            </span>
+            <Icon name="error_outline" size={48} className="text-outline-variant mb-4" />
             <p className="font-body-lg text-body-lg text-on-surface-variant mb-4">
               {error}
             </p>
@@ -103,9 +102,7 @@ export default function HomePage() {
         {/* Empty State */}
         {!loading && !error && confessions.length === 0 && (
           <div className="text-center py-20">
-            <span className="material-symbols-outlined text-5xl text-outline-variant mb-4">
-              spa
-            </span>
+            <Icon name="spa" size={48} className="text-outline-variant mb-4" />
             <h2 className="font-headline-md text-headline-md text-on-surface mb-2">
               Belum ada cerita
             </h2>
@@ -117,7 +114,7 @@ export default function HomePage() {
               href="/confess"
               className="bg-primary text-on-primary px-6 py-3 rounded-full font-label-sm text-label-sm font-bold hover:opacity-90 transition-all inline-flex items-center gap-2"
             >
-              <span className="material-symbols-outlined text-sm">edit</span>
+              <Icon name="edit" size={14} />
               Tulis Cerita
             </Link>
           </div>
@@ -145,7 +142,7 @@ export default function HomePage() {
                   href="/dashboard"
                   className="inline-flex items-center gap-2 px-5 py-3 bg-secondary-container/20 text-secondary rounded-full font-label-sm text-label-sm hover:bg-secondary-container/30 transition-colors"
                 >
-                  <span className="material-symbols-outlined text-sm">hourglass_empty</span>
+                  <Icon name="hourglass_empty" size={14} />
                   {pendingCount} cerita sedang menunggu review
                 </Link>
               </div>
@@ -170,7 +167,7 @@ export default function HomePage() {
         href="/confess"
         className="fixed bottom-4 right-4 md:bottom-8 md:right-8 bg-primary text-on-primary rounded-full px-4 py-3 md:px-6 md:py-4 flex items-center gap-2 md:gap-3 shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 z-50"
       >
-        <span className="material-symbols-outlined text-xl md:text-2xl">add_circle</span>
+        <Icon name="add_circle" size={24} />
         <span className="font-label-sm text-label-sm font-bold hidden md:inline">
           Write a Confession
         </span>

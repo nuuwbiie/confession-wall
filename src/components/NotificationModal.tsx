@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 
+import Icon from "./Icon";
+
 interface HrReply {
   id: string;
   content: string;
@@ -87,14 +89,14 @@ export default function NotificationModal({ confessionId, isOpen, onClose }: Not
         {/* Header */}
         <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-outline-variant/10">
           <h2 className="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary">support_agent</span>
+            <Icon name="support_agent" size={24} className="text-primary" />
             Balasan HR
           </h2>
           <button
             onClick={onClose}
             className="p-2 rounded-full hover:bg-surface-container transition-colors"
           >
-            <span className="material-symbols-outlined text-on-surface-variant">close</span>
+            <Icon name="close" size={24} className="text-on-surface-variant" />
           </button>
         </div>
 
@@ -110,7 +112,7 @@ export default function NotificationModal({ confessionId, isOpen, onClose }: Not
           {/* Error */}
           {error && !loading && (
             <div className="flex items-center gap-2 p-3 bg-error-container/30 text-on-error-container rounded-xl text-sm">
-              <span className="material-symbols-outlined text-sm">error</span>
+              <Icon name="error" size={14} className="shrink-0" />
               {error}
             </div>
           )}

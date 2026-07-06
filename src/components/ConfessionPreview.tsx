@@ -1,5 +1,6 @@
 "use client";
 
+import Icon from "./Icon";
 import type { ConfessionFont } from "@/lib/constants";
 import { FONT_OPTIONS } from "@/lib/constants";
 
@@ -22,9 +23,7 @@ export default function ConfessionPreview({
   if (!content.trim()) {
     return (
       <div className="bg-surface-container-low rounded-2xl p-8 text-center">
-        <span className="material-symbols-outlined text-4xl text-outline-variant mb-3">
-          visibility
-        </span>
+        <Icon name="visibility" size={36} className="text-outline-variant mb-3" />
         <p className="text-on-surface-variant/60 font-label-sm text-label-sm">
           Mulai menulis untuk melihat pratinjau
         </p>
@@ -36,9 +35,7 @@ export default function ConfessionPreview({
     <div className="bg-surface-container-lowest rounded-2xl p-6 md:p-8 soft-shadow border border-outline-variant/10">
       {/* Preview label */}
       <div className="flex items-center gap-2 mb-4 pb-4 border-b border-outline-variant/10">
-        <span className="material-symbols-outlined text-primary text-sm">
-          preview
-        </span>
+        <Icon name="preview" size={14} className="text-primary" />
         <span className="font-label-sm text-label-sm text-primary font-medium">
           Pratinjau
         </span>
@@ -55,9 +52,7 @@ export default function ConfessionPreview({
               Baru saja
             </span>
           </div>
-          <span className="material-symbols-outlined text-outline-variant text-lg">
-            more_horiz
-          </span>
+          <Icon name="more_horiz" size={20} className="text-outline-variant" />
         </div>
 
         <div
@@ -69,12 +64,12 @@ export default function ConfessionPreview({
 
         <div className="flex items-center gap-6">
           <button className="flex items-center gap-2 text-on-surface-variant/50" disabled>
-            <span className="material-symbols-outlined text-lg">favorite</span>
+            <Icon name="favorite" size={20} className="text-on-surface-variant/50" />
             <span className="font-label-sm text-label-sm">0</span>
           </button>
           {allowReplies && (
             <button className="flex items-center gap-2 text-on-surface-variant/50" disabled>
-              <span className="material-symbols-outlined text-lg">chat_bubble</span>
+              <Icon name="chat_bubble" size={20} className="text-on-surface-variant/50" />
               <span className="font-label-sm text-label-sm">0</span>
             </button>
           )}

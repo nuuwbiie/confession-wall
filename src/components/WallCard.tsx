@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 
+import Icon from "./Icon";
+
 export interface WallCardData {
   id: string;
   content: string;
@@ -13,6 +15,7 @@ export interface WallCardData {
   comments?: number;
   created_at: string;
   author_username?: string | null;
+  user_id?: string | null;
 }
 
 const FONT_CLASS_MAP: Record<string, string> = {
@@ -134,9 +137,7 @@ export default function WallCard({
             {getTimeAgo(data.created_at)}
           </span>
         </div>
-        <span className="material-symbols-outlined text-outline-variant group-hover:text-tertiary transition-colors">
-          more_horiz
-        </span>
+        <Icon name="more_horiz" size={24} className="text-outline-variant group-hover:text-tertiary transition-colors" />
       </div>
 
       {/* Content with font styling */}
@@ -153,12 +154,11 @@ export default function WallCard({
             liked ? "text-error" : "text-on-surface-variant hover:text-error"
           }`}
         >
-          <span
-            className="material-symbols-outlined"
-            style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}
-          >
-            favorite
-          </span>
+            <Icon
+            name={liked ? "favorite" : "favorite_border"}
+            size={24}
+            style={{ color: liked ? "var(--color-error)" : undefined }}
+          />
           <span className="font-label-sm text-label-sm">{likeCount}</span>
         </button>
 
@@ -167,7 +167,7 @@ export default function WallCard({
             onClick={onCommentClick}
             className="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors"
           >
-            <span className="material-symbols-outlined">chat_bubble</span>
+            <Icon name="chat_bubble" size={24} />
             <span className="font-label-sm text-label-sm">
               {data.comments || 0}
             </span>

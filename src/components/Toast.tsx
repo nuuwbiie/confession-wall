@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import Icon from "./Icon";
+
 interface ToastProps {
   message: string;
   type: "success" | "error";
@@ -56,9 +58,7 @@ export default function Toast({
             : "bg-error-container/95 text-on-error-container border-error/20"
         }`}
       >
-        <span className="material-symbols-outlined text-sm shrink-0">
-          {type === "success" ? "check_circle" : "error"}
-        </span>
+        <Icon name={type === "success" ? "check_circle" : "error"} size={14} className="shrink-0" />
         <span className="font-label-sm text-label-sm">{message}</span>
         <button
           onClick={() => {
@@ -67,7 +67,7 @@ export default function Toast({
           }}
           className="p-1 rounded-full hover:opacity-70 transition-opacity shrink-0 ml-1"
         >
-          <span className="material-symbols-outlined text-sm">close</span>
+          <Icon name="close" size={14} />
         </button>
       </div>
     </div>

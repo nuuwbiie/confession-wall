@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { useAuth } from "./AuthProvider";
 import NotificationModal from "./NotificationModal";
 import { useNotificationPermission } from "@/hooks/useNotificationPermission";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useNotificationPolling } from "@/hooks/useNotificationPolling";
+import Icon from "./Icon";
 
 interface UserConfession {
   id: string;
@@ -133,6 +135,21 @@ export default function Header() {
       subscribe();
     }
   }, [permission, swReady, isSubscribed, subscribe]);
+
+  // Real-time notification polling via Supabase Realtime
+  const handleNewNotification = useCallback(
+    (notification: Notification, unreadDelta: number) => {
+      setNotifications((prev) => [notification, ...prev]);
+      setUnreadCount((prev) => prev + unreadDelta);
+    },
+    []
+  );
+
+  useNotificationPolling({
+    userId: user?.id ?? null,
+    permission,
+    onNewNotification: handleNewNotification,
+  });
 
   const fetchUserConfessions = async () => {
     setUserConfessionsLoading(true);
@@ -284,7 +301,7 @@ export default function Header() {
                     className="p-2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer min-touch-target flex items-center justify-center relative"
                     aria-label="Notifications"
                   >
-                    <span className="material-symbols-outlined">notifications</span>
+                    <Icon name="notifications" size={24} />
                     {unreadCount > 0 && (
                       <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-error text-[10px] text-on-error font-bold rounded-full flex items-center justify-center">
                         {unreadCount > 9 ? "9+" : unreadCount}
@@ -311,9 +328,7 @@ export default function Header() {
                             }`}
                           >
                             <div className="flex items-start gap-2">
-                              <span className="material-symbols-outlined text-sm shrink-0 mt-0.5">
-                                {permission === "denied" ? "notifications_off" : "notifications_active"}
-                              </span>
+                              <Icon name={permission === "denied" ? "notifications_off" : "notifications_active"} size={14} className="shrink-0 mt-0.5" />
                               <div className="flex-1 min-w-0">
                                 {permission === "denied" ? (
                                   <p className="text-on-surface-variant">
@@ -393,7 +408,7 @@ export default function Header() {
                   className="p-2 text-on-surface-variant hover:text-error transition-colors cursor-pointer min-touch-target flex items-center justify-center"
                   aria-label="Sign out"
                 >
-                  <span className="material-symbols-outlined">logout</span>
+                  <Icon name="logout" size={24} />
                 </button>
 
                 {/* Avatar dropdown */}
@@ -471,9 +486,7 @@ export default function Header() {
               }`}
               aria-label={mobileMenuOpen ? "Tutup menu" : "Buka menu"}
             >
-              <span className="material-symbols-outlined">
-                {mobileMenuOpen ? "close" : "menu"}
-              </span>
+              <Icon name={mobileMenuOpen ? "close" : "menu"} size={24} />
             </button>
           </div>
         </nav>
@@ -501,9 +514,7 @@ export default function Header() {
                       : "text-on-surface-variant hover:bg-surface-container-low"
                   }`}
                 >
-                  <span className="material-symbols-outlined">
-                    {item.href === "/" ? "wall_art" : item.href === "/confess" ? "edit_note" : "dashboard"}
-                  </span>
+                  <Icon name={item.href === "/" ? "wall_art" : item.href === "/confess" ? "edit_note" : "dashboard"} size={24} />
                   <span className="font-body-md text-body-md">{item.label}</span>
                   {pathname === item.href && (
                     <span className="ml-auto w-2 h-2 rounded-full bg-primary" />

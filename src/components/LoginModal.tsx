@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { generateUsername } from "@/lib/username-generator";
 import { usernameToEmail, validateUsername } from "@/lib/auth-helpers";
 import TurnstileWidget from "./TurnstileWidget";
+import Icon from "./Icon";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -179,7 +180,7 @@ export default function LoginModal({ isOpen, onClose, onSkip, onSuccess }: Login
             onClick={onClose}
             className="p-2 rounded-full hover:bg-surface-container transition-colors"
           >
-            <span className="material-symbols-outlined text-on-surface-variant">close</span>
+            <Icon name="close" size={24} className="text-on-surface-variant" />
           </button>
         </div>
 
@@ -194,9 +195,7 @@ export default function LoginModal({ isOpen, onClose, onSkip, onSuccess }: Login
               <span className="font-label-sm text-label-sm text-primary font-semibold">
                 Login untuk mengakses lebih banyak fitur
               </span>
-              <span className={`material-symbols-outlined text-primary transition-transform duration-200 ${benefitsExpanded ? 'rotate-180' : ''}`}>
-                expand_more
-              </span>
+              <Icon name="expand_more" size={24} className={`text-primary transition-transform duration-200 ${benefitsExpanded ? 'rotate-180' : ''}`} />
             </button>
 
             {benefitsExpanded && (
@@ -212,7 +211,7 @@ export default function LoginModal({ isOpen, onClose, onSkip, onSuccess }: Login
                       { icon: "history", text: "Melihat riwayat confessionmu" },
                     ].map((item) => (
                       <li key={item.text} className="flex items-center gap-2 text-sm text-on-surface-variant">
-                        <span className="material-symbols-outlined text-primary text-sm">{item.icon}</span>
+                        <Icon name={item.icon} size={14} className="text-primary shrink-0" />
                         {item.text}
                       </li>
                     ))}
@@ -228,7 +227,7 @@ export default function LoginModal({ isOpen, onClose, onSkip, onSuccess }: Login
                       { icon: "edit_note", text: "Mengirim confession anonim" },
                     ].map((item) => (
                       <li key={item.text} className="flex items-center gap-2 text-sm text-on-surface-variant/70">
-                        <span className="material-symbols-outlined text-on-surface-variant/50 text-sm">{item.icon}</span>
+                        <Icon name={item.icon} size={14} className="text-on-surface-variant/50 shrink-0" />
                         {item.text}
                       </li>
                     ))}
@@ -282,7 +281,7 @@ export default function LoginModal({ isOpen, onClose, onSkip, onSuccess }: Login
                   className="px-3 py-2 bg-surface-container text-on-surface-variant rounded-xl hover:bg-surface-container-high transition-colors"
                   title="Generate random username"
                 >
-                  <span className="material-symbols-outlined">shuffle</span>
+                  <Icon name="shuffle" size={24} />
                 </button>
               </div>
               {usernameError && (
@@ -313,7 +312,7 @@ export default function LoginModal({ isOpen, onClose, onSkip, onSuccess }: Login
             {/* Error */}
             {error && (
               <div className="flex items-center gap-2 p-3 bg-error-container/30 text-on-error-container rounded-xl">
-                <span className="material-symbols-outlined text-sm">error</span>
+                <Icon name="error" size={14} className="shrink-0" />
                 <span className="font-label-sm text-label-sm">{error}</span>
               </div>
             )}
@@ -321,7 +320,7 @@ export default function LoginModal({ isOpen, onClose, onSkip, onSuccess }: Login
             {/* Success */}
             {successMessage && (
               <div className="flex items-center gap-2 p-3 bg-secondary-container/30 text-on-secondary-container rounded-xl">
-                <span className="material-symbols-outlined text-sm">check_circle</span>
+                <Icon name="check_circle" size={14} className="shrink-0" />
                 <span className="font-label-sm text-label-sm">{successMessage}</span>
               </div>
             )}

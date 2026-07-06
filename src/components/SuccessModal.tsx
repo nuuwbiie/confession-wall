@@ -1,5 +1,7 @@
 "use client";
 
+import Icon from "./Icon";
+
 interface SuccessModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -20,9 +22,7 @@ export default function SuccessModal({ isOpen, onClose }: SuccessModalProps) {
       <div className="relative bg-surface-container-lowest rounded-3xl w-full max-w-md soft-shadow border border-outline-variant/10 animate-fadeIn mx-2 p-8 md:p-10 text-center">
         {/* Success Icon */}
         <div className="mx-auto mb-6 w-16 h-16 md:w-20 md:h-20 rounded-full bg-secondary-container/40 flex items-center justify-center">
-          <span className="material-symbols-outlined text-4xl md:text-5xl text-secondary">
-            check_circle
-          </span>
+          <Icon name="check_circle" size={40} className="text-secondary" />
         </div>
 
         {/* Title */}
@@ -39,9 +39,7 @@ export default function SuccessModal({ isOpen, onClose }: SuccessModalProps) {
         {/* Info Card */}
         <div className="bg-surface-container-low rounded-xl p-4 mb-8 text-left">
           <div className="flex items-start gap-3">
-            <span className="material-symbols-outlined text-sm text-primary mt-0.5">
-              info
-            </span>
+            <Icon name="info" size={14} className="text-primary mt-0.5 shrink-0" />
             <p className="font-body-sm text-body-sm text-on-surface-variant">
               Moderasi dilakukan untuk menjaga kenyamanan bersama. Jika ceritamu
               sesuai dengan pedoman, cerita akan tampil dalam waktu 1×24 jam.

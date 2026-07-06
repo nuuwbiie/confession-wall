@@ -6,6 +6,7 @@ import { useConfessionForm } from "@/hooks/useConfessionForm";
 import ConfessionPreview from "./ConfessionPreview";
 import SuccessModal from "./SuccessModal";
 import TurnstileWidget from "./TurnstileWidget";
+import Icon from "./Icon";
 
 export default function ConfessionForm() {
   const {
@@ -292,9 +293,7 @@ export default function ConfessionForm() {
               }`}
             >
               <span className="flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined text-sm">
-                  {state.showPreview ? "visibility_off" : "visibility"}
-                </span>
+                <Icon name={state.showPreview ? "visibility_off" : "visibility"} size={14} />
                 {state.showPreview ? "Tutup Pratinjau" : "Lihat Pratinjau"}
               </span>
             </button>
@@ -312,9 +311,7 @@ export default function ConfessionForm() {
                 </>
               ) : state.status === "success" ? (
                 <>
-                  <span className="material-symbols-outlined text-sm">
-                    check_circle
-                  </span>
+                  <Icon name="check_circle" size={14} />
                   Terkirim!
                 </>
               ) : (
@@ -326,7 +323,7 @@ export default function ConfessionForm() {
           {/* Error Message */}
           {state.status === "error" && (
             <div className="flex items-center gap-2 p-3 bg-error-container/30 text-on-error-container rounded-xl">
-              <span className="material-symbols-outlined text-sm">error</span>
+              <Icon name="error" size={14} className="shrink-0" />
               <span className="font-label-sm text-label-sm">
                 {state.errorMessage}
               </span>
@@ -337,9 +334,7 @@ export default function ConfessionForm() {
           {hasDraft && state.status !== "success" && (
             <div className="flex items-center justify-between p-3 bg-surface-container-low rounded-xl">
               <div className="flex items-center gap-2 text-on-surface-variant/60">
-                <span className="material-symbols-outlined text-sm">
-                  save
-                </span>
+                <Icon name="save" size={14} />
                 <span className="font-label-sm text-label-sm">
                   Draft tersimpan
                 </span>

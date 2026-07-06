@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import Icon from "@/components/Icon";
 import type { WallCardData } from "@/components/WallCard";
 
 type TabType = "pending" | "filtered";
@@ -206,9 +207,7 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center min-h-[80vh] px-margin-mobile md:px-margin-desktop">
         <div className="text-center max-w-md">
-          <span className="material-symbols-outlined text-6xl text-outline-variant mb-4">
-            lock
-          </span>
+          <Icon name="lock" size={48} className="text-outline-variant mb-4" />
           <h1 className="font-headline-md text-headline-md text-on-surface mb-2">
             Akses Terbatas
           </h1>
@@ -261,7 +260,7 @@ export default function DashboardPage() {
         <div className="bg-surface-container-lowest p-6 rounded-2xl soft-shadow border border-outline-variant/10">
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-primary-container/20 rounded-xl text-primary">
-              <span className="material-symbols-outlined">history_edu</span>
+              <Icon name="history_edu" size={24} />
             </div>
             <span className="text-xs font-bold text-primary px-2 py-1 bg-primary-container/30 rounded-full">
               Total
@@ -278,7 +277,7 @@ export default function DashboardPage() {
         <div className="bg-surface-container-lowest p-6 rounded-2xl soft-shadow border border-outline-variant/10">
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-secondary-container/20 rounded-xl text-secondary">
-              <span className="material-symbols-outlined">hourglass_empty</span>
+              <Icon name="hourglass_empty" size={24} />
             </div>
             <span className="text-xs font-bold text-secondary px-2 py-1 bg-secondary-container/30 rounded-full">
               Urgent
@@ -295,7 +294,7 @@ export default function DashboardPage() {
         <div className="bg-surface-container-lowest p-6 rounded-2xl soft-shadow border border-outline-variant/10">
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-tertiary-container/20 rounded-xl text-tertiary">
-              <span className="material-symbols-outlined">favorite</span>
+              <Icon name="favorite" size={24} />
             </div>
           </div>
           <p className="text-on-surface-variant font-label-sm text-label-sm mb-1">
@@ -311,7 +310,7 @@ export default function DashboardPage() {
         <div className="bg-surface-container-lowest p-6 rounded-2xl soft-shadow border border-outline-variant/10">
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-outline-variant/20 rounded-xl text-on-surface-variant">
-              <span className="material-symbols-outlined">visibility</span>
+              <Icon name="visibility" size={24} />
             </div>
           </div>
           <p className="text-on-surface-variant font-label-sm text-label-sm mb-1">
@@ -375,7 +374,7 @@ export default function DashboardPage() {
             {approveAllLoading ? (
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
-              <span className="material-symbols-outlined text-sm">select_all</span>
+              <Icon name="select_all" size={14} />
             )}
             Setujui Semua ({pendingCount})
           </button>
@@ -393,9 +392,7 @@ export default function DashboardPage() {
       {/* Empty State */}
       {!loading && currentData.length === 0 && (
         <div className="text-center py-20 bg-surface-container-lowest rounded-3xl soft-shadow border border-outline-variant/10">
-          <span className="material-symbols-outlined text-5xl text-outline-variant mb-4">
-            {activeTab === "pending" ? "check_circle" : "inbox"}
-          </span>
+          <Icon name={activeTab === "pending" ? "check_circle" : "inbox"} size={48} className="text-outline-variant mb-4" />
           <h2 className="font-headline-md text-headline-md text-on-surface mb-2">
             {activeTab === "pending"
               ? "Semua confession sudah di-review"
@@ -436,9 +433,7 @@ export default function DashboardPage() {
                             &ldquo;{confession.content.slice(0, 80)}...&rdquo;
                           </p>
                           <span className="text-[11px] text-on-surface-variant/60 flex items-center gap-1">
-                            <span className="material-symbols-outlined text-xs">
-                              schedule
-                            </span>{" "}
+                            <Icon name="schedule" size={12} />{" "}
                             {getTimeAgo(confession.created_at)}
                           </span>
                         </div>
@@ -467,9 +462,7 @@ export default function DashboardPage() {
                                 className="p-2 rounded-full text-secondary hover:bg-secondary-container/20 transition-colors disabled:opacity-30"
                                 title="Setujui"
                               >
-                                <span className="material-symbols-outlined text-[20px]">
-                                  check_circle
-                                </span>
+                                <Icon name="check_circle" size={20} />
                               </button>
                               <button
                                 onClick={() => handleAction(confession.id, "reject")}
@@ -477,31 +470,27 @@ export default function DashboardPage() {
                                 className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-30"
                                 title="Tolak"
                               >
-                                <span className="material-symbols-outlined text-[20px]">
-                                  block
-                                </span>
+                                <Icon name="block" size={20} />
                               </button>
                             </>
                           )}
+                          {confession.user_id && (
                           <button
                             onClick={() => handleHrReplyOpen(confession.id)}
                             disabled={actionLoading === confession.id}
                             className="p-2 rounded-full text-primary hover:bg-primary-container/20 transition-colors disabled:opacity-30"
                             title="Balas secara pribadi"
                           >
-                            <span className="material-symbols-outlined text-[20px]">
-                              reply
-                            </span>
+                            <Icon name="reply" size={20} />
                           </button>
+                          )}
                           <button
                             onClick={() => handleAction(confession.id, "delete")}
                             disabled={actionLoading === confession.id}
                             className="p-2 rounded-full text-error hover:bg-error-container/20 transition-colors disabled:opacity-30"
                             title="Hapus"
                           >
-                            <span className="material-symbols-outlined text-[20px]">
-                              delete
-                            </span>
+                            <Icon name="delete" size={20} />
                           </button>
                         </div>
                       </td>
@@ -525,7 +514,7 @@ export default function DashboardPage() {
                     disabled={currentPage === 1}
                     className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-30"
                   >
-                    <span className="material-symbols-outlined text-sm">chevron_left</span>
+                    <Icon name="chevron_left" size={14} />
                   </button>
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                     <button
@@ -545,7 +534,7 @@ export default function DashboardPage() {
                     disabled={currentPage === totalPages}
                     className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-30"
                   >
-                    <span className="material-symbols-outlined text-sm">chevron_right</span>
+                    <Icon name="chevron_right" size={14} />
                   </button>
                 </div>
               )}
@@ -587,9 +576,7 @@ export default function DashboardPage() {
                           className="min-touch-target p-2 rounded-full text-secondary hover:bg-secondary-container/20 transition-colors disabled:opacity-30 flex items-center justify-center"
                           title="Setujui"
                         >
-                          <span className="material-symbols-outlined text-[20px]">
-                            check_circle
-                          </span>
+                          <Icon name="check_circle" size={20} />
                         </button>
                         <button
                           onClick={() => handleAction(confession.id, "reject")}
@@ -597,31 +584,27 @@ export default function DashboardPage() {
                           className="min-touch-target p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-30 flex items-center justify-center"
                           title="Tolak"
                         >
-                          <span className="material-symbols-outlined text-[20px]">
-                            block
-                          </span>
+                          <Icon name="block" size={20} />
                         </button>
                       </>
                     )}
+                    {confession.user_id && (
                     <button
                       onClick={() => handleHrReplyOpen(confession.id)}
                       disabled={actionLoading === confession.id}
                       className="min-touch-target p-2 rounded-full text-primary hover:bg-primary-container/20 transition-colors disabled:opacity-30 flex items-center justify-center"
                       title="Balas secara pribadi"
                     >
-                      <span className="material-symbols-outlined text-[20px]">
-                        reply
-                      </span>
+                      <Icon name="reply" size={20} />
                     </button>
+                    )}
                     <button
                       onClick={() => handleAction(confession.id, "delete")}
                       disabled={actionLoading === confession.id}
                       className="min-touch-target p-2 rounded-full text-error hover:bg-error-container/20 transition-colors disabled:opacity-30 flex items-center justify-center"
                       title="Hapus"
                     >
-                      <span className="material-symbols-outlined text-[20px]">
-                        delete
-                      </span>
+                      <Icon name="delete" size={20} />
                     </button>
                   </div>
                 </div>
@@ -636,7 +619,7 @@ export default function DashboardPage() {
                   disabled={currentPage === 1}
                   className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-30"
                 >
-                  <span className="material-symbols-outlined text-sm">chevron_left</span>
+                  <Icon name="chevron_left" size={14} />
                 </button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                   <button
@@ -656,7 +639,7 @@ export default function DashboardPage() {
                   disabled={currentPage === totalPages}
                   className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-30"
                 >
-                  <span className="material-symbols-outlined text-sm">chevron_right</span>
+                  <Icon name="chevron_right" size={14} />
                 </button>
               </div>
             )}
@@ -677,7 +660,7 @@ export default function DashboardPage() {
                 onClick={handleHrReplyClose}
                 className="p-2 rounded-full hover:bg-surface-container transition-colors"
               >
-                <span className="material-symbols-outlined text-on-surface-variant">close</span>
+                <Icon name="close" size={24} className="text-on-surface-variant" />
               </button>
             </div>
             <p className="text-sm text-on-surface-variant mb-4">
@@ -694,7 +677,7 @@ export default function DashboardPage() {
             />
             {hrReplyError && (
               <div className="flex items-center gap-2 mt-2 p-3 bg-error-container/30 text-on-error-container rounded-xl text-sm">
-                <span className="material-symbols-outlined text-sm">error</span>
+                <Icon name="error" size={14} />
                 {hrReplyError}
               </div>
             )}
@@ -713,7 +696,7 @@ export default function DashboardPage() {
                 {hrReplySubmitting ? (
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
-                  <span className="material-symbols-outlined text-sm">send</span>
+                  <Icon name="send" size={14} />
                 )}
                 Kirim Balasan
               </button>
@@ -726,9 +709,7 @@ export default function DashboardPage() {
       <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="bg-primary/5 rounded-3xl p-8 border border-primary/10 flex items-center gap-6">
           <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-primary soft-shadow">
-            <span className="material-symbols-outlined text-3xl">
-              auto_awesome
-            </span>
+            <Icon name="auto_awesome" size={36} />
           </div>
           <div>
             <h5 className="font-bold text-on-surface mb-1">
@@ -749,9 +730,7 @@ export default function DashboardPage() {
         </div>
         <div className="bg-secondary/5 rounded-3xl p-8 border border-secondary/10 flex items-center gap-6">
           <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-secondary soft-shadow">
-            <span className="material-symbols-outlined text-3xl">
-              support_agent
-            </span>
+            <Icon name="support_agent" size={36} />
           </div>
           <div>
             <h5 className="font-bold text-on-surface mb-1">HR Help Desk</h5>
