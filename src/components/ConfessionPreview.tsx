@@ -1,12 +1,13 @@
 "use client";
 
 import Icon from "./Icon";
-import type { ConfessionFont } from "@/lib/constants";
-import { FONT_OPTIONS } from "@/lib/constants";
+import type { ConfessionFont, CardTheme } from "@/lib/constants";
+import { FONT_OPTIONS, CARD_THEME_OPTIONS } from "@/lib/constants";
 
 interface ConfessionPreviewProps {
   content: string;
   font: ConfessionFont;
+  cardTheme?: CardTheme;
   isPublic: boolean;
   allowReplies: boolean;
 }
@@ -14,11 +15,16 @@ interface ConfessionPreviewProps {
 export default function ConfessionPreview({
   content,
   font,
+  cardTheme = "default",
   isPublic,
   allowReplies,
 }: ConfessionPreviewProps) {
   const fontOption = FONT_OPTIONS.find((f) => f.id === font);
   const fontFamily = fontOption?.fontFamily || "'Inter', sans-serif";
+
+  const themeOption = CARD_THEME_OPTIONS.find((t) => t.id === cardTheme);
+  const previewBg = themeOption?.bg || "#ffffff";
+  const previewBorder = themeOption?.border || "#d0d0d0";
 
   if (!content.trim()) {
     return (
@@ -32,7 +38,7 @@ export default function ConfessionPreview({
   }
 
   return (
-    <div className="bg-surface-container-lowest rounded-2xl p-6 md:p-8 soft-shadow border border-outline-variant/10">
+    <div className="rounded-2xl p-6 md:p-8 soft-shadow border-2" style={{ backgroundColor: previewBg, borderColor: previewBorder }}>
       {/* Preview label */}
       <div className="flex items-center gap-2 mb-4 pb-4 border-b border-outline-variant/10">
         <Icon name="preview" size={14} className="text-primary" />

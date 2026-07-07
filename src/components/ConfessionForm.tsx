@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FONT_OPTIONS, CONFESSION_MAX_CHARS } from "@/lib/constants";
+import { FONT_OPTIONS, CARD_THEME_OPTIONS, CONFESSION_MAX_CHARS } from "@/lib/constants";
 import { useConfessionForm } from "@/hooks/useConfessionForm";
 import ConfessionPreview from "./ConfessionPreview";
 import SuccessModal from "./SuccessModal";
@@ -41,11 +41,12 @@ export default function ConfessionForm() {
           body: JSON.stringify({
             content: state.content.trim(),
             font: state.font,
+            card_theme: state.cardTheme,
             is_public: state.isPublic,
             allow_replies: state.allowReplies,
             is_anonymous: state.isAnonymous,
-            honeypot, // send honeypot field for server-side check
-            turnstileToken, // send Turnstile token for server-side verification
+            honeypot,
+            turnstileToken,
           }),
       });
 
@@ -130,6 +131,30 @@ export default function ConfessionForm() {
                 >
                   {font.label}
                 </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Color Theme Picker */}
+          <div>
+            <label className="font-label-sm text-label-sm text-on-surface-variant mb-3 block">
+              Warna Card
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {CARD_THEME_OPTIONS.map((theme) => (
+                <button
+                  type="button"
+                  key={theme.id}
+                  onClick={() => dispatch({ type: "SET_CARD_THEME", payload: theme.id })}
+                  className={`w-9 h-9 rounded-full border-3 transition-all duration-200 hover:scale-110 ${
+                    state.cardTheme === theme.id
+                      ? "scale-110 shadow-md ring-2 ring-primary/40"
+                      : ""
+                  }`}
+                  style={{ backgroundColor: theme.bg, borderColor: theme.border }}
+                  title={theme.label}
+                  aria-label={theme.label}
+                />
               ))}
             </div>
           </div>
@@ -357,6 +382,7 @@ export default function ConfessionForm() {
           <ConfessionPreview
             content={state.content}
             font={state.font}
+            cardTheme={state.cardTheme}
             isPublic={state.isPublic}
             allowReplies={state.allowReplies}
           />

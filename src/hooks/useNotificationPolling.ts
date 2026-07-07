@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
@@ -26,14 +26,27 @@ export function useNotificationPolling({
   onNewNotification,
 }: UseNotificationPollingOptions) {
   const shownNotifIds = useRef<Set<string>>(new Set());
+  const channelRef = useRef<any>(null);
+  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
 
-  useEffect(() => {
+  const setupSubscription = useCallback(() => {
     if (!userId) return;
 
+    // Clean up existing channel first
+    if (channelRef.current && supabaseRef.current) {
+      supabaseRef.current.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
     const supabase = createClient();
+    supabaseRef.current = supabase;
 
     const channel = supabase
-      .channel("notifications-realtime")
+      .channel(`notifications-realtime-${userId}`, {
+        config: {
+          presence: { key: userId },
+        },
+      })
       .on(
         "postgres_changes",
         {
@@ -51,9 +64,14 @@ export function useNotificationPolling({
 
             // Fire browser notification if permitted
             if (permission === "granted" && "Notification" in window) {
-              new Notification("Confession Wall", {
-                body: newNotif.content,
-              });
+              try {
+                new Notification("Confession Wall", {
+                  body: newNotif.content,
+                  icon: "/icon-192.png",
+                });
+              } catch {
+                // Notification API may fail if user hasn't granted permission
+              }
             }
 
             // Notify parent to update state
@@ -62,13 +80,36 @@ export function useNotificationPolling({
         }
       )
       .subscribe((status) => {
-        if (status !== "SUBSCRIBED") {
-          console.warn("Realtime subscription status:", status);
+        if (status === "SUBSCRIBED") {
+          console.log("[realtime] Subscribed to notifications for user", userId);
+        } else if (status === "CLOSED") {
+          console.warn("[realtime] Subscription closed, retrying in 3s...", userId);
+          // Retry after 3 seconds
+          setTimeout(() => {
+            if (userId) setupSubscription();
+          }, 3000);
+        } else {
+          console.warn("[realtime] Subscription status:", status);
         }
       });
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    channelRef.current = channel;
   }, [userId, permission, onNewNotification]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    // Small delay to ensure auth is loaded before subscribing
+    const timer = setTimeout(() => {
+      setupSubscription();
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+      if (channelRef.current && supabaseRef.current) {
+        supabaseRef.current.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, [setupSubscription]);
 }

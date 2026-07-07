@@ -1,5 +1,22 @@
 export type ConfessionFont = "sans" | "serif" | "mono" | "handwriting";
 
+export type CardTheme = "default" | "pink" | "blue" | "green" | "yellow" | "orange" | "purple";
+
+export const CARD_THEME_OPTIONS: {
+  id: CardTheme;
+  label: string;
+  bg: string;
+  border: string;
+}[] = [
+  { id: "default", label: "Putih",  bg: "#ffffff", border: "#d0d0d0" },
+  { id: "pink",    label: "Pink",   bg: "#ffe4ec", border: "#f06292" },
+  { id: "blue",    label: "Biru",   bg: "#e3f2fd", border: "#42a5f5" },
+  { id: "green",   label: "Hijau",  bg: "#e8f5e9", border: "#66bb6a" },
+  { id: "yellow",  label: "Kuning", bg: "#fffde7", border: "#fdd835" },
+  { id: "orange",  label: "Orange", bg: "#fff3e0", border: "#ff9800" },
+  { id: "purple",  label: "Ungu",   bg: "#f3e5f5", border: "#ab47bc" },
+];
+
 export interface FontOption {
   id: ConfessionFont;
   label: string;

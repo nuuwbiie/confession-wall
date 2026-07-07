@@ -47,9 +47,26 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         swRegistration.current = registration;
         setSwReady(true);
 
+        // Force check for new SW version (picks up updated sw.js)
+        registration.update();
+
         // Check if already subscribed
         const sub = await registration.pushManager.getSubscription();
         setIsSubscribed(sub !== null);
+
+        // Listen for messages from SW (e.g., SW_ACTIVATED)
+        navigator.serviceWorker.addEventListener("message", (event) => {
+          if (event.data?.type === "SW_ACTIVATED") {
+            // Re-check subscription status after SW activation
+            registration.pushManager.getSubscription().then((s) => {
+              setIsSubscribed(s !== null);
+            });
+          }
+          if (event.data?.type === "PUSH_SUBSCRIPTION_EXPIRED") {
+            // Re-subscribe
+            subscribe();
+          }
+        });
       })
       .catch((err) => {
         setError("Failed to register service worker: " + err.message);

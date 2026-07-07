@@ -33,6 +33,7 @@ export async function sendPushToUser(
   url?: string
 ): Promise<{ sent: number; failed: number }> {
   if (!ensureVapidConfigured()) {
+    console.warn("[push] VAPID keys not configured, skipping push");
     return { sent: 0, failed: 0 };
   }
 
@@ -42,7 +43,13 @@ export async function sendPushToUser(
     .select("id, subscription")
     .eq("user_id", userId);
 
-  if (error || !subscriptions || subscriptions.length === 0) {
+  if (error) {
+    console.error("[push] DB error fetching subscriptions:", error.message);
+    return { sent: 0, failed: 0 };
+  }
+
+  if (!subscriptions || subscriptions.length === 0) {
+    console.log("[push] No push subscriptions found for user", userId);
     return { sent: 0, failed: 0 };
   }
 
@@ -50,16 +57,22 @@ export async function sendPushToUser(
     title,
     body,
     url: url || "/",
+    icon: "/icon-192.png",
+    badge: "/badge-72.png",
   });
+
+  console.log("[push] Sending push to", subscriptions.length, "subscriptions for user", userId);
 
   let sent = 0;
   let failed = 0;
 
   for (const sub of subscriptions) {
     try {
+      console.log("[push] Sending to endpoint:", (sub.subscription as any)?.endpoint?.slice(0, 50));
       await webpush.sendNotification(sub.subscription as any, payload);
       sent++;
     } catch (err: any) {
+      console.error("[push] Failed to send to subscription", sub.id, "status:", err.statusCode, "message:", err.message);
       // If subscription is expired/invalid, delete it
       if (
         err.statusCode === 410 ||
@@ -73,5 +86,6 @@ export async function sendPushToUser(
     }
   }
 
+  console.log("[push] Result for user", userId, ":", { sent, failed });
   return { sent, failed };
 }

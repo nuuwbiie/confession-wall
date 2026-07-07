@@ -8,6 +8,7 @@ export interface WallCardData {
   id: string;
   content: string;
   font: string;
+  card_theme?: string;
   is_public: boolean;
   allow_replies: boolean;
   status: string;
@@ -30,6 +31,26 @@ const STATUS_BADGE_MAP: Record<string, { bg: string; text: string }> = {
   pending: { bg: "bg-secondary-container/30", text: "text-on-secondary-container" },
   private: { bg: "bg-tertiary-container/30", text: "text-on-tertiary-container" },
   rejected: { bg: "bg-error-container/30", text: "text-on-error-container" },
+};
+
+const THEME_BG_MAP: Record<string, string> = {
+  default: "bg-surface-container-lowest",
+  pink:    "bg-[#ffe4ec]",
+  blue:    "bg-[#e3f2fd]",
+  green:   "bg-[#e8f5e9]",
+  yellow:  "bg-[#fffde7]",
+  orange:  "bg-[#fff3e0]",
+  purple:  "bg-[#f3e5f5]",
+};
+
+const THEME_BORDER_MAP: Record<string, string> = {
+  default: "border-outline-variant/10",
+  pink:    "border-[#f06292]/40",
+  blue:    "border-[#42a5f5]/40",
+  green:   "border-[#66bb6a]/40",
+  yellow:  "border-[#fdd835]/40",
+  orange:  "border-[#ff9800]/40",
+  purple:  "border-[#ab47bc]/40",
 };
 
 function getTimeAgo(dateStr: string): string {
@@ -117,9 +138,12 @@ export default function WallCard({
   const fontClass =
     FONT_CLASS_MAP[data.font] || FONT_CLASS_MAP.sans;
   const statusBadge = STATUS_BADGE_MAP[data.status];
+  const theme = data.card_theme || "default";
+  const themeBg = THEME_BG_MAP[theme] || THEME_BG_MAP.default;
+  const themeBorder = THEME_BORDER_MAP[theme] || THEME_BORDER_MAP.default;
 
   return (
-    <article className="masonry-item bg-surface-container-lowest rounded-2xl p-5 md:p-8 soft-shadow soft-shadow-hover transition-all duration-300 border border-outline-variant/10 group">
+    <article className={`masonry-item ${themeBg} rounded-2xl p-5 md:p-8 soft-shadow soft-shadow-hover transition-all duration-300 ${themeBorder} group border-2`}>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <span

@@ -111,7 +111,7 @@ export async function POST(request: Request) {
     const supabase = getAdminClient();
     const body = await request.json();
 
-    const { content, font, is_public, allow_replies, is_anonymous, honeypot, turnstileToken } = body;
+    const { content, font, card_theme, is_public, allow_replies, is_anonymous, honeypot, turnstileToken } = body;
 
     // Honeypot check: if this field is filled, it's a bot
     if (honeypot) {
@@ -169,6 +169,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid font" }, { status: 400 });
     }
 
+    const validThemes = ["default", "pink", "blue", "green", "yellow", "orange", "purple"];
+    if (card_theme && !validThemes.includes(card_theme)) {
+      return NextResponse.json({ error: "Invalid card_theme" }, { status: 400 });
+    }
+
     // Detect authenticated user from cookie
     let userId: string | null = null;
     try {
@@ -193,6 +198,7 @@ export async function POST(request: Request) {
     let insertPayload: Record<string, any> = {
       content: content.trim(),
       font: font || "sans",
+      card_theme: card_theme || "default",
       is_public: is_public !== false,
       allow_replies: allow_replies !== false,
       status: "pending",

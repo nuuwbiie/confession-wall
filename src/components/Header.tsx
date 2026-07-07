@@ -151,6 +151,25 @@ export default function Header() {
     onNewNotification: handleNewNotification,
   });
 
+  // Fetch unread count on mount and when user changes (so badge shows correctly on page load)
+  const fetchUnreadCount = useCallback(async () => {
+    if (!user) {
+      setUnreadCount(0);
+      return;
+    }
+    try {
+      const res = await fetch("/api/notifications?unread=true&limit=1");
+      const result = await res.json();
+      setUnreadCount(result.unreadCount || 0);
+    } catch {
+      // Ignore — will be corrected when panel is opened
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchUnreadCount();
+  }, [fetchUnreadCount]);
+
   const fetchUserConfessions = async () => {
     setUserConfessionsLoading(true);
     try {
@@ -312,10 +331,24 @@ export default function Header() {
                   {/* Notifications dropdown */}
                   {notificationsOpen && (
                     <div className="absolute top-full right-0 mt-2 w-80 max-w-[calc(100vw-32px)] bg-surface-container-lowest rounded-2xl soft-shadow border border-outline-variant/10 overflow-hidden z-50">
-                      <div className="px-5 py-4 border-b border-outline-variant/10">
+                      <div className="px-5 py-4 border-b border-outline-variant/10 flex items-center justify-between">
                         <p className="font-label-sm text-label-sm text-on-surface font-medium">
                           Notifikasi
                         </p>
+                        {unreadCount > 0 && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                await fetch("/api/notifications/read-all", { method: "PUT" });
+                                setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+                                setUnreadCount(0);
+                              } catch {}
+                            }}
+                            className="text-[11px] text-primary font-medium hover:underline"
+                          >
+                            Tandai dibaca semua
+                          </button>
+                        )}
                       </div>
                       <div className="max-h-80 overflow-y-auto">
                         {/* Notification permission banner */}

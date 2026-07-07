@@ -3,6 +3,7 @@
 import { useReducer, useEffect, useCallback } from "react";
 import {
   type ConfessionFont,
+  type CardTheme,
   DRAFT_STORAGE_KEY,
   CONFESSION_MIN_CHARS,
   CONFESSION_MAX_CHARS,
@@ -13,6 +14,7 @@ export type FormStatus = "idle" | "submitting" | "success" | "error";
 interface FormState {
   content: string;
   font: ConfessionFont;
+  cardTheme: CardTheme;
   isPublic: boolean;
   allowReplies: boolean;
   isAnonymous: boolean;
@@ -24,6 +26,7 @@ interface FormState {
 type FormAction =
   | { type: "SET_CONTENT"; payload: string }
   | { type: "SET_FONT"; payload: ConfessionFont }
+  | { type: "SET_CARD_THEME"; payload: CardTheme }
   | { type: "SET_IS_PUBLIC"; payload: boolean }
   | { type: "SET_ALLOW_REPLIES"; payload: boolean }
   | { type: "SET_IS_ANONYMOUS"; payload: boolean }
@@ -36,6 +39,7 @@ type FormAction =
 const initialState: FormState = {
   content: "",
   font: "sans",
+  cardTheme: "default",
   isPublic: true,
   allowReplies: true,
   isAnonymous: true,
@@ -50,6 +54,8 @@ function formReducer(state: FormState, action: FormAction): FormState {
       return { ...state, content: action.payload, status: "idle" };
     case "SET_FONT":
       return { ...state, font: action.payload };
+    case "SET_CARD_THEME":
+      return { ...state, cardTheme: action.payload };
     case "SET_IS_PUBLIC":
       return { ...state, isPublic: action.payload };
     case "SET_ALLOW_REPLIES":
@@ -96,6 +102,7 @@ export function useConfessionForm() {
           JSON.stringify({
             content: state.content,
             font: state.font,
+            cardTheme: state.cardTheme,
             isPublic: state.isPublic,
             allowReplies: state.allowReplies,
           })
@@ -106,7 +113,7 @@ export function useConfessionForm() {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [state.content, state.font, state.isPublic, state.allowReplies]);
+  }, [state.content, state.font, state.cardTheme, state.isPublic, state.allowReplies]);
 
   const clearDraft = useCallback(() => {
     try {
